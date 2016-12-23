@@ -1,0 +1,7 @@
+<div id="{{ experiment.start_phase.id }}_{{ experiment.start_phase.default_condition.next_phase.id }}" class="phase_separator" ondragenter="dragenter(event);" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragleave(event);">
+    <div class="phase_arrow">
+        <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+    </div>
+</div>
+{% from '_page_helpers.html' import render_recursive_phase %}
+{{ render_recursive_phase(experiment, experiment.start_phase.default_condition.next_phase) }}

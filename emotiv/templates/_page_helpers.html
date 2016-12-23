@@ -1,0 +1,57 @@
+{% macro render_content_header(content_title) %}
+    <div style="padding-top: 5px; padding-bottom: 5px;">
+        <div style="display: inline-block; float: left;">
+            <h1 style="padding: 0; margin: 0; color: darkgrey; font-weight: 200;">
+                {{ content_title }}
+            </h1>
+        </div>
+    </div>
+    <br><br>
+    <hr>
+{% endmacro %}
+
+{% macro render_phase_hover(phase, admin, is_builtin=False) %}
+    <div class="hover_modal">
+        <div class="phase_hover">
+            <a
+                href="{{ url_for('admin.review_experiment_phase' if admin else 'phase.detail', phase_id=phase.id) }}"
+                class="phase_edit_button">
+                {% if admin %}View{% else %}Edit{% endif %}
+            </a>
+            {% if not admin and not is_builtin %}
+            <button
+                onclick="if (confirm('Delete this phase?')) { window.location = '{{ url_for('phase.delete', phase_id=phase.id) }}' }"
+                class="phase_delete_button">
+                <i class="fa fa-times-circle" aria-hidden="true"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro render_recursive_phase(experiment, phase, admin=False) %}
+    {% if phase.id != experiment.end_phase.id and phase %}
+        <div style="position: relative;" id="{{ phase.id }}" class="phase_element" ondragover="allowDrop(event)" {% if phase.id != experiment.calibration_phase.id and phase.id != experiment.start_phase.id and phase.id != experiment.end_phase.id %}draggable="false" ondragstart="drag(event);" {% else %}draggable="false"{% endif %}>
+            <span>{{ phase.name }}</span>
+            {{ render_phase_hover(phase, admin) }}
+        </div>
+        <div id="{{ phase.id }}_{{ phase.default_condition.next_phase.id }}" class="phase_separator" ondragenter="dragenter(event);" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragleave(event);">
+            <div class="phase_arrow">
+                <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+            </div>
+        </div>
+        {{ render_recursive_phase(experiment, phase.default_condition.next_phase, admin) }}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_page_dots(dots=6, active_dot=1) %}
+<div>
+    {% for number in range(0, dots) %}
+        {% if number == active_dot - 1 %}
+        <i style="color: #3A3F49;" class="fa fa-circle" aria-hidden="true"></i>
+        {% else %}
+        <i style="color: #A6A5A9;" class="fa fa-circle-o" aria-hidden="true"></i>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endmacro %}

@@ -1,0 +1,15 @@
+Hello,
+
+    I'm from {{ user.organization.name }} and would like you to participate in a new EEG\r\n
+    experiment\r\n
+    \r\n{{ experiment.name }}.\r\n
+    \r\n
+    {{ experiment.description }}\r\n
+    \r\n
+    The experiment starts on {{ experiment.launch_date }} and ends on {{ experiment.end_date }}.\r\n
+    \r\n
+    Please click the link or enter this token to accept your invitation: {{ token }}\r\n
+    {{ url }}{{ url_for('experiment.accept_token', token=token) }}\r\n
+    \r\n
+    Thanks,\r\n
+    {{ user.first_name }} {{ user.last_name }}

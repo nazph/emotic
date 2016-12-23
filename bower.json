@@ -1,0 +1,21 @@
+{
+  "name": "emotiv-builder-and-web-viewer",
+  "description": "Emotiv Builder and Viewer ====",
+  "main": "emotiv/static/js/main.js",
+  "authors": [
+    "Alex Stark <alexcstark@gmail.com>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/gigster-eng/emotiv-builder-and-web-viewer",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "heatmap.js-amd": "^2.0.5"
+  }
+}

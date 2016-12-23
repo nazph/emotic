@@ -1,0 +1,22 @@
+{
+    "extends": "google",
+<<<<<<< HEAD
+=======
+    "parser": "babel-eslint",
+>>>>>>> 74bf89609813b24187418a2a04d7603466272519
+    "installedESLint": true,
+    "plugins": ["requirejs"],
+    "env": {
+        "browser":true,
+        "jquery": true
+    },
+    "rules": {
+        "require-jsdoc":0,
+        "new-cap": 0,
+        "no-unused-vars": 0,
+        "no-alert": 0,
+        "camelcase": 0,
+        "no-loop-func": 0,
+        "no-warning-comments": 0
+    }
+}

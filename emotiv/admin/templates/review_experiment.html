@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Administration{% endblock %}
+
+{% block head %}
+<style>
+    #top_buttons {
+        height: 70px;
+    }
+    #top_buttons a {
+        text-decoration: none;
+        float: right;
+        margin-left: 10px;
+        margin-bottom: 10px;
+    }
+    #attributes h2 {
+        text-transform: uppercase;
+        color: lightgrey;
+        font-size: 16px;
+        margin-bottom: 11px;
+        margin-top: 31px;
+    }
+    #attributes p {
+        margin: 0;
+    }
+    .section_break {
+        padding-top: 45px;
+    }
+    .review_attribute_item {
+        margin: 15px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <span id="admin_tag"></span>
+    <div id="top_buttons">
+        <a href="{{ url_for('admin.approve_experiment', experiment_id=experiment.id) }}">
+            <button class="primary_button square_button">Approve</button>
+        </a>
+        <a href="{{ url_for('admin.review_experiment_roadmap', experiment_id=experiment.id) }}">
+            <button class="clear_button_input square_button">Review roadmap</button>
+        </a>
+        <hr class="clear_both">
+    </div>
+    <div id="attributes" class="center_element">
+        <h2>Name</h2><p>{{ experiment.name }}</p>
+        <h2>Description</h2> {% if experiment.description %}{{ experiment.description }}{% else %}No description{% endif %}</p>
+        <h2>Organization</h2> {{ experiment.organization.name }}</p>
+        <h2>Launch Date</h2> {{ experiment.launch_date }}</p>
+        <h2>End Date</h2> {% if experiment.end_date %}{{ experiment.end_date }}{% else %}No end date.{% endif %}</p>
+        <h2>Recordings To Collect</h2> {{ experiment.recordings_to_collect }}</p>
+        <h2>Private</h2> {{ experiment.private }}</p>
+        <h2>Allow Repeats</h2> {{ experiment.allow_repeats }}</p>
+        <h2>Eye-Tracking</h2> {{ experiment.eye_tracking_enabled }}</p>
+        <h2>Web-Tracking</h2> {{ experiment.web_tracking_enabled }}</p>
+        {% if experiment.image_id %}
+        <h2>Image</h2> <img src="{{ experiment.image.file_name }}"/></p>
+        {% endif %}
+
+        <div class="section_break">
+            <h2>Eliminative Criteria</h2>
+            <hr/>
+        </div>
+        <div class="center_element inline_block">
+            <ul>
+            {% for _filter in experiment.filters %}
+                {% set attribute, params = _filter.attribute, _filter.parameters %}
+                {% set type = attribute.input_type %}
+                {% macro _render_if(expr) %}
+                    {% if expr %}
+                        <li class="review_attribute_item">
+                            <h2>{{ attribute.name }}</h2>
+                            <ul>{{ caller() }}</ul>
+                        </li>
+                    {% endif %}
+                {% endmacro %}
+                {% call _render_if(type in ['ms', 'ss']) %}
+                    {% for id in params['selected'] %}
+                        <li>{{ SelectOption.query.get(id).value }}</li>
+                    {% endfor %}
+                {% endcall %}
+                {% call _render_if(type in ['dt', 'nm']) %}
+                    <li>Min: {% if params['low'] %}{{ params['low'] }}{% else %}&lt;None&gt;{% endif %}<li>
+                    <li>Max: {% if params['high'] %}{{ params['high'] }}{% else %}&lt;None&gt;{% endif %}<li>
+                {% endcall %}
+                {% call _render_if(type == 'ot' and attribute.name == 'Location') %}
+                    <li>{{ params['text'] }}</li>
+                {% endcall %}
+            {% endfor %}
+            </ul>
+        </div><br/>
+        <div class="section_break">
+            <h2>Criteria Selected</h2>
+            <hr/>
+        </div>
+        <div class="center_element inline-block">
+            <ul>
+                {% for criteria in experiment.attributes_collected %}
+                    <li>{{ criteria.name }}</li>
+                {% endfor %}
+            </ul>
+        </div><br>
+        <div class="section_break"></div>
+    </div>
+{% endblock %}

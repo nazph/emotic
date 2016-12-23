@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<style>
+/* https://www.paulirish.com/2012/box-sizing-border-box-ftw/ */
+html {
+    box-sizing: border-box;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+</style>
+{% endblock head %}
+
+{% block content %}<div id="dashboard"></div>{% endblock %}
+
+{% block after_content %}
+<script>
+    var dashboardProps = {{ dashboard_props|tojson|safe }};
+</script>
+{{ import_jsx('emotiv/dashboard/jsx/dashboard.js', 'dashboard') }}
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Experiments{% endblock %}
+
+{% block flashes %}
+    {% from "_form_helpers.html" import flash_errors %}
+    {{ flash_errors(form) }}
+{% endblock flashes %}
+
+{% block content %}
+    {% from "_page_helpers.html" import render_content_header, render_page_dots %}
+    {{ render_content_header(experiment.name) }}
+    <a class="clear_button_input" href="{{ url_for('experiment.new_experiment_step_5', experiment_id=experiment.id) }}"><button type="button" id="back_btn">Back</button></a>
+    <div class="center experiment_top_text">
+            Number of recordings to collect<br><br>
+            Note: ${{ recording_cost }} per recording
+    </div>
+    <div class="center_element">
+        {% from "_form_helpers.html" import render_checkbox_input, render_submit, render_text_input %}
+        <form method=post action='' class="center">
+            {{ form.hidden_tag() }}
+            <br>
+            {{ render_text_input('recordings_collected', "How many recordings do you want to collect?", value=form.recordings_collected.data) }}
+            <br>
+            Leave field blank or enter 0 for unlimited recordings.
+            <br>
+            <br>
+            {{ render_text_input(form.start_date.short_name, 'Start Date', class="datepicker", value=form.start_date.data) }}
+            <br>
+            {% if form.end_date.data %}
+                {{ render_text_input(form.end_date.short_name, 'End Date', class="datepicker", value=form.end_date.data) }}
+            {% else %}
+                {{ render_text_input(form.end_date.short_name, 'End Date', class="datepicker") }}
+            {% endif %}
+            <br>
+            {{ render_checkbox_input('eye_tracking', 1, 'Check this box to collect eye-tracking data from your participants') }}
+            <br>
+            {{ render_checkbox_input('web_tracking', 1, 'Check this box to collect web-tracking data from your participants') }}
+            <br>
+            {{ render_submit('NEXT') }}
+            <br>
+            {{ render_page_dots(6, 6) }}
+        </form>
+        <br><br><br>
+    </div>
+{% endblock %}
+
+{% block java_script %}
+    requirejs(['jquery', 'jquery-ui'], function() {
+        $(function() {
+            $( ".datepicker" ).datepicker({
+                dateFormat: "yy-mm-dd"
+            });
+        });
+    });
+{% endblock %}

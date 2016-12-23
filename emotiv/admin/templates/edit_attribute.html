@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% block title %}Administration{% endblock %}
+
+{% block head %}
+<style>
+    .dialog_modal_box {
+        width: 477px;
+    }
+
+    .question_input {
+        color: black;
+    }
+
+    .question_input::-webkit-input-placeholder {
+        color: #B6B5B6;
+    }
+
+    .question_input::-moz-placeholder {
+        color: #B6B5B6;
+    }
+
+    .question_input:-moz-placeholder {
+        color: #B6B5B6;
+    }
+
+    .question_input:-ms-input-placeholder {
+        color: #B6B5B6;
+    }
+
+    .question_input::-ms-input-placeholder {
+        color: #B6B5B6;
+    }
+
+    h3 {
+        color: #B6B5B6;
+        text-transform: uppercase;
+        text-align: left;
+        margin-bottom: 0;
+        font-size: 18px;
+        font-weight: 100;
+    }
+
+    select + .fa {
+        line-height: 20px;
+        position: absolute;
+        right: 20px;
+        top: 26px; /* .rect[height] - this[line-height])/2 */
+    }
+
+    .rect,
+    button.rect {
+        height: 72px;
+        width: 100%;
+        border-radius: 7px;
+        box-sizing: border-box;
+    }
+
+    button.rect {
+        color: black;
+        font-weight: 200;
+        text-align: left;
+    }
+
+    .plus_sign {
+        color: #D9D5D4;
+        margin-right: 13px;
+        font-size: larger;
+        vertical-align: bottom;
+    }
+
+    .option_row {
+        height: 72px;
+        width: 100%;
+        box-sizing: border-box;
+        background-color: white;
+        border: thin solid lightgrey;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 47px;
+        padding-right: 24px;
+    }
+
+    .option_row * {
+        font-size: larger;
+    }
+
+    .option_row:first-child {
+        border-top-left-radius: inherit;
+        border-top-right-radius: inherit;
+    }
+
+    .option_row:last-child {
+        border-bottom-left-radius: inherit;
+        border-bottom-right-radius: inherit;
+    }
+
+    .option_row input {
+        border: none;
+    }
+
+    .option_row span {
+        transform: rotate(0.125turn);
+        color: #DBDBDC;
+        font-size: 30px;
+        cursor: pointer;
+    }
+
+    .text_options {
+        border-radius: 7px;
+        box-shadow: 0 0 3px rgba(0,0,0,0.2);
+    }
+
+    .create_attribute {
+        margin-top: 50px;
+    }
+
+    #new_attribute {
+        margin-top: 50px;
+    }
+
+    #new_attribute_content {
+        width: 430px;
+        margin-top: 70px;
+    }
+
+    #new_question {
+        margin-bottom: 13px;
+    }
+
+    select {
+        -moz-appearance: none;
+        -webkit-appearance: none;
+    }
+</style>
+{% endblock %}
+
+{% block flashes %}
+    {% from "_form_helpers.html" import flash_errors %}
+    {{ flash_errors(form) }}
+{% endblock flashes %}
+
+{% block content %}
+    <span id="admin_tag"></span>
+    <h3 id="new_attribute">
+        {% if view %}View{% else %}Create New{% endif %} Attribute
+    </h3>
+    <hr>
+    <div class="center_element center" id="new_attribute_content">
+        {% if suggestion %}
+            <div class="attr_description">
+                <h3>Client Suggestion</h3>
+                <p>"{{ suggestion.text }}"</p>
+            </div>
+        {% endif %}
+        <form method="post">
+            {% from "_form_helpers.html" import render_submit, render_text_input %}
+            {{ form.hidden_tag() }}
+            {% if view %}
+            <h3 class="center_element center">{{type}}</h3>
+            {% else %}
+                <h3>Input Type</h3>
+                <div class="relative">
+                    <select id="select_input_type" name="input_type" class="clear rect">
+                        {% for choice in form.input_type.choices %}
+                        <option
+                            {% if form.input_type.data == choice[0] %}
+                            selected="selected"
+                            {% endif %}
+                            value="{{ choice[0] }}">
+                            {{ choice[1] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <i class="fa fa-caret-down" aria-hidden="true"></i>
+                </div>
+
+                <h3>Question</h3>
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Enter a question"
+                    class="clear rect question_input"
+                    id="new_question"
+                    value="{{ form.name.data or '' }}"/>
+            {% endif %}
+
+            <br/>
+            <div class="options_ui" style="display: none;">
+                <div id="criteria_options" class="center">
+                    <!-- this is reused in the create and show view -->
+                    {% set options = form.criteria_options.entries %}
+                    {% set content_types = form.content_types.entries %}
+                    {% include "criteria_options.html" %}
+                </div>
+                <br>
+            </div>
+            {% if not view %}
+                <button id="add_text_button" class="options_ui clear_button_input rect">
+                    <i class="fa fa-plus-square plus_sign" aria-hidden="true"></i>Add additional text option
+                </button>
+                <button id="add_image_button" class="options_ui clear_button_input rect">
+                    <i class="fa fa-plus-square plus_sign" aria-hidden="true"></i>Add additional image option
+                </button>
+                {{ render_submit('Create Attribute', class='create_attribute') }}
+                <br>
+            {% endif %}
+          </form>
+        <div class="flex">
+            <div class="submit_input center_element">
+                <a href="{{ url_for('admin.view_attributes') }}">Back to Attributes</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block after_content %}
+{% import "_form_helpers.html" as form %}
+<div id="add_text_option" class="dialog_modal" style="display: none;">
+    <div class="dialog_modal_box">
+        <h2>New Option</h2>
+        <form onsubmit="add_text_option(); return false;">
+          <input type="hidden" name="content_type" value="t"/>
+            {{ form.render_text_input(id="new_text_option", name="value", label="Enter question text") }}
+            <br/>
+            {{ form.render_submit() }}
+            <br/>
+        </form>
+        <div class="clear_button_input">
+            <button onclick="close_add_option_form()">
+                <div class="clear_button_input_text">Cancel</div>
+            </button>
+        </div>
+    </div>
+</div>
+<div id="add_image_option" class="dialog_modal" style="display: none;">
+    <div class="dialog_modal_box">
+        <h2>New Option</h2>
+        <form onsubmit="add_image_option(); return false;">
+            <input type="hidden" name="content_type" value="i"/>
+            {{ form.render_text_input(id="new_image_option", name="value", label="Enter an image url") }}
+            <br/>
+            {{ form.render_submit() }}
+            <br/>
+        </form>
+        <div class="clear_button_input">
+            <button onclick="close_add_option_form()">
+                <div class="clear_button_input_text">Cancel</div>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block java_script %}
+{% if view %}
+    {% if form.input_type.data == 'ms' or form.input_type.data == 'ss' %}
+    $(function() {
+        $('.options_ui').show();
+    })
+    {% endif %}
+{% else %}
+    function renderOptions(newOption, type) {
+        var opts = $('#criteria_options .option')
+          .map(function() {
+            let contentType = $(this).attr('data-content-type');
+            return {
+              value: contentType === 'i' ? $(this).attr('src') : $(this).text() || $(this).val(),
+              content_type: contentType
+            };
+          })
+          .get()
+          .concat(newOption ? newOption : [])
+          .map(function(o) {
+            return 'o='+JSON.stringify(o);
+          })
+          .join('&');
+        $.get("/admin/new_attribute/render_options", opts, function( data ) {
+            $('#criteria_options').empty().append(data);
+        });
+    }
+    function close_add_option_form() {
+      $('#new_text_option').val('');
+      $('#new_image_option').val('');
+      $('#add_text_option').hide();
+      $('#add_image_option').hide();
+    }
+    function add_image_option() {
+      var value = $('#new_image_option').val().trim();
+      var option = {value: value, content_type: 'i'}
+      close_add_option_form();
+      renderOptions(option, 'i');
+    }
+    function add_text_option() {
+      var value = $('#new_text_option').val().trim();
+      var option = {value: value, content_type: 't'}
+      close_add_option_form();
+      renderOptions(option, 't');
+    }
+    function remove_option(n) {
+      $('.option_row').get(n).remove();
+      renderOptions();
+    }
+    function toggle_option_form() {
+        var type = $('#select_input_type :selected').attr('value');
+        $('.options_ui').toggle(type == 'ms' || type == 'ss');
+    }
+    $(function() {
+        $('#select_input_type').change(toggle_option_form);
+        toggle_option_form();
+        $('#add_text_button').click(function(e) {
+            e.preventDefault();
+            $('#add_text_option').show();
+            $('#new_option').focus();
+        });
+        $('#add_image_button').click(function(e) {
+            e.preventDefault();
+            $('#add_image_option').show();
+            $('#new_option').focus();
+        });
+    });
+{% endif %}
+{% endblock %}

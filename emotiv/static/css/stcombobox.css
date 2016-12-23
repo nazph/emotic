@@ -1,0 +1,66 @@
+.stc-box {
+    display: inline-block;
+    position: relative;
+}
+
+.stc-button {
+    cursor: pointer;
+    width: 20px;
+    background: #fff url(/static/images/select-dropdown-arrow.png) no-repeat center;
+}
+
+.stc-table {
+    position: relative;
+    border: 1px solid #e3e1e0;
+}
+
+.stc-input {
+    border: 0;
+    text-align: left;
+    padding-left: 8px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    border: none;
+    box-shadow: none;
+    background: #fff;
+    width: 280px;
+    box-sizing: border-box;
+}
+
+.stc-lc {
+    position: absolute;
+    background-color: #fff;
+    z-index: 9999;
+    max-height: 150px;
+    overflow: auto;
+    border: 1px solid #e3e1e0;
+    border-top: 0;
+}
+
+.stc-lrow-odd
+{
+    background-color: #F5F5F5;
+}
+
+.stc-ltable
+{
+    width: 100%;
+    position: relative;
+}
+
+.stc-lrow-hover
+{
+    background-color: #e0e0e0;
+}
+
+.stc-lrow-hl
+{
+    background-color: #BDBDBD;
+}
+
+.stc-text
+{
+    display: inline-block;
+    font-family: Arial;
+    font-size: 12px;
+}

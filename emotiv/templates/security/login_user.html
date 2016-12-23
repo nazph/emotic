@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Login User{% endblock %}
+
+{% block flashes %}
+    {% from "_form_helpers.html" import flash_errors %}
+    {{ flash_errors(form) }}
+{% endblock flashes %}
+
+{% block content %}
+    <div class="login links" id="login_sign_up">
+        <span class="active">Sign In</span>&nbsp;&nbsp;&nbsp;
+        <a href="{{ url_for('register') }}">
+            <span class="inactive">Sign Up</span>
+        </a>
+    </div>
+    <br>
+    <div class="center_element center">
+        <form method=post action='' class="center">
+            {{ form.hidden_tag() }}
+            <div class="text_input top_input_box center_element">
+                <img
+                    src="{{ url_for('static', filename='images/sign-in-user-icon.png') }}"
+                    class="2x"
+                    width="16"
+                    height="16"
+                />
+                <input class="top_input_box" type="text" name="username" placeholder="Username"/>
+            </div>
+            <div class="text_input bottom_input_box center_element">
+                <i class="register_lock_icon fa fa-lock" aria-hidden="true"></i>
+                <input class="bottom_input_box" type="password" name="password" placeholder="Password"/>
+            </div>
+            <br>
+            <br>
+            <div class="forgot">Forgot password?
+                <a href="{{ reset_password_link }}">Request password reset.</a>
+            </div>
+            <br><br>
+            <div class="submit_input center_element">
+                <input type="submit" name="login" value="SUBMIT"/>
+            </div>
+        </form>
+    </div>
+{% endblock %}

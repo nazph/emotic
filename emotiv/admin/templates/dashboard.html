@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Administration{% endblock %}
+{% block head %}
+<style>
+    section {
+        margin-bottom: 65px;
+    }
+    section h2 {
+        text-transform: uppercase;
+        color: #C7C5C3;
+        font-size: 18px;
+    }
+    .exp_number {
+        font-weight: bold;
+        width: 50px;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .exp_title {
+        color: black;
+        text-overflow: ellipsis;
+        width: 250px;
+        display: inline-block;
+        white-space: nowrap;
+        overflow: hidden;
+        vertical-align: middle;
+    }
+    .exp_date {
+        vertical-align: middle;
+    }
+    .experiment button {
+        float: right;
+    }
+    #dashboard button {
+        margin-left: 10px;
+        margin-top: -7px;
+    }
+    #attribute-requests h2 {
+        display: inline;
+    }
+    #attribute-requests button {
+        float: right;
+    }
+    .attr_request > div {
+        text-decoration: underline;
+        display: inline;
+    }
+    .dashboard-no-sessions {
+        width: 100%;
+    }
+</style>
+{% endblock head %}
+{% block content %}
+<span id="admin_tag"></span>
+<div id="dashboard">
+    <section>
+        <h2>Active Sessions</h2>
+        <hr/>
+        {% for session in sessions %}
+            <div>
+                {{ session.id }}
+                <a href="{{ url_for('admin.view_experiment_session') }}">
+                <button class="square_button">View</button></a>
+            </div>
+        {% else %}
+            <span class="greyed-text dashboard-no-sessions">No active sessions right now.</span>
+        {% endfor %}
+    </section>
+    <section>
+        <h2>Experiments Pending Approval</h2>
+        <hr/>
+        {% for experiment in experiments %}
+            <div class="experiment">
+                <span class="exp_number">{{ experiment.id }}</span>
+                <a class="exp_title" href="{{ url_for('admin.review_experiment', experiment_id=experiment.id) }}">
+                    {{- experiment.name -}}
+                </a>
+                {% if experiment.submitted_date -%}
+                <span class="exp_date"> {{ experiment.submitted_date.date() }}</span>
+                {% else %}
+                <span class="exp_date"> {{ experiment.created_at.date() }}</span>
+                {%- endif %}
+                <button
+                    class="primary_button square_button"
+                    onClick='decision(true, true,
+                        {{- experiment.id }},
+                        {{- experiment.name|tojson|safe }},
+                        {{- experiment.organization.name|tojson|safe }})'>
+                    Approve
+                </button>
+                <button
+                    class="clear_button_input square_button"
+                    onClick='decision(true, false,
+                        {{- experiment.id|tojson|safe }},
+                        {{- experiment.name|tojson|safe }},
+                        {{- experiment.organization.name|tojson|safe }})'>
+                    Deny
+                </button>
+                <hr class="clear_both"/>
+            </div>
+        {% else %}
+            No experiments pending approval right now.
+        {% endfor %}
+    </section>
+    <section id="attribute-requests">
+        <h2>Attribute/Criteria Requests</h2>
+            <a href="{{ url_for('admin.new_attribute') }}">
+                <button class="clear_button_input square_button">New Attribute</button>
+            </a>
+            <a href="{{ url_for('admin.view_attributes') }}">
+                <button class="clear_button_input square_button">View Attributes</button>
+            </a>
+        <hr class="clear_both"/>
+        {% for attribute in attributes %}
+            <div class="attr_request">
+                <div>{{ attribute.text }}</div>
+                <button
+                    class="primary_button square_button"
+                    onClick='decision(false, true,
+                        {{- attribute.id|tojson|safe }},
+                        {{- attribute.text|tojson|safe }})'>
+                    Approve
+                </button>
+                <button
+                    class="clear_button_input square_button"
+                    onClick='decision(false, false,
+                        {{- attribute.id|tojson|safe }},
+                        {{- attribute.text|tojson|safe }})'>
+                    Deny
+                </button>
+                <hr class="clear_both"/>
+            </div>
+        {% else %}
+            No attribute requests right now.
+        {% endfor %}
+    </section>
+    <div id="modal_container"></div>
+</div>
+{% endblock %}
+
+{% block after_content %}
+<script>
+    var decision = function() {};
+    requirejs(['react', 'reactDOM', _es6('admin')], function(React, ReactDOM, admin) {
+        decision = function(isExperiment, approve, id, name, organization) {
+            var container = document.getElementById("modal_container");
+            ReactDOM.render(
+                React.createElement(admin.DecisionModal, {
+                    id: id,
+                    isExperiment: isExperiment,
+                    approve: approve,
+                    handleClose: function() {
+                        ReactDOM.unmountComponentAtNode(container);
+                    },
+                    organization: organization,
+                    name: name
+                }),
+                container
+            );
+        }
+        $('body').append('<div id="react_loaded"></div>');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Administration{% endblock %}
+{% block content %}
+    <span id="admin_tag"></span>
+    <h1>Administration</h1>
+    <hr>
+    <div class="center_element center">
+       <h2>{{ approve_or_deny }} {{ type }}</h2>
+       <div id="attribute_description">
+            {% if type == 'Attribute' %}
+                <div class="attr_description">
+                    <span>Attribute Description:</span>
+                    <p>{{ suggestion }}</p>
+                </div>
+            {% else %}
+                <div class="experiment_description">
+                    <div>Organization: {{ organization }}</div>
+                    <div>Experiment Title: {{ experiment }}</div>
+                </div>
+            {% endif %}
+            <form method="post">
+                {% from "_form_helpers.html" import render_submit, render_text_area %}
+                {{ form.hidden_tag() }}
+                {% if approve_or_deny == 'Deny' %}
+                    {{ render_text_area('comment', "Enter a reason for the denial (optional)") }}
+                {% endif %}
+                <br>
+                <div class="flex">
+                    <button
+                        class="clear_button_input center_element"
+                        onclick="event.preventDefault(); window.location = '{{ url_for('admin.dashboard') }}';"
+                    >
+                        Back
+                    </button>
+                    {% if approve_or_deny == 'Approve' %}
+                        {{ render_submit('Confirm Approval') }}
+                    {% else %}
+                        {{ render_submit('Confirm Denial') }}
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

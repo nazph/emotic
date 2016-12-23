@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% block title %}Experiments{% endblock %}
+
+{% block content %}
+    <div class="center_element center flex">
+        <div id="experiment_roadmap_header">
+            <h1>{{ experiment.name }}</h1>
+        </div>
+        <div>
+            <div class="flex">
+                <div class="clear_button_input">
+                    <button id="experiment_roadmap_delete_btn" onclick="confirm_delete();" type="button">Delete Experiment</button>
+                </div>
+                <div class="button_input">
+                    <a href="{{ url_for('experiment.submit', experiment_id=experiment.id) }}"><button type="button">Submit Experiment</button></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div id="experiment_roadmap_secondary_header">
+        <div>&nbsp;</div>
+        <h2 id="experiment_roadmap_title">Roadmap</h2>
+        <div class="clear_button_input">
+            <button type="button">Create New Group</button>
+        </div>
+    </div>
+
+    {% import '_page_helpers.html' as page %}
+    <div class="center_element center">
+        <div class="phase_container">
+            <div class="builtin_phase">
+                {{ page.render_phase_hover(experiment.calibration_phase, False, True) }}
+                Calibration
+            </div>
+            <div id="experiment_roadmap_calibration_introduction" class="phase_separator">
+                <div class="phase_arrow">
+                    <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+            </div>
+            </div>
+            <div class="builtin_phase">
+                {{ page.render_phase_hover(experiment.start_phase, False, True) }}
+                Introduction
+            </div>
+            <div id="phases">
+                    <div id="{{ experiment.start_phase.id }}_{{ experiment.start_phase.default_condition.next_phase.id }}" class="phase_separator" ondragenter="dragenter(event);" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragleave(event);">
+                        <div class="phase_arrow">
+                            <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    {{ page.render_recursive_phase(experiment, experiment.start_phase.default_condition.next_phase) }}
+            </div>
+            <div class="phase_conclusion builtin_phase">
+                {{ page.render_phase_hover(experiment.end_phase, False, True) }}
+                Conclusion
+            </div>
+        </div>
+        <hr/>
+        <div id="new_element_controls">
+            <h2>Phases<i class="question"></i></h2>
+            <div class="phase_element_container flex">
+                <div class="new_phase" draggable="true" ondragstart="drag_new(event);";>
+                    <i class="fa fa-plus-circle fa-2x" aria-hidden="true"></i>
+                    New Phase
+                </div>
+            </div>
+            {% if phase_groups %}
+                <h2>Phase Groups<i class="question"></i></h2>
+                <div class="phase_group_container">
+                    {% for group in phase_groups %}
+                        <div class="phase_group" draggable="true">
+                            {{ group.name }}
+                        </div>
+                    {% endfor %}
+                    <div style="margin-left: 15px;">
+                        <div style="
+                            background-image: url({{ url_for('static', filename="images/pagination-arrow.png") }});
+                            height: 39px;
+                            width: 39px;
+                            border: thin solid lightgrey;
+                            border-radius: 7px;
+                            background-repeat: no-repeat;
+                            background-position: 50% 50%;">
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+{% endblock %}
+
+
+{% block after_content %}
+    <div class="roadmap_dialog_modal" id="phase-modal">
+        <div class="phase_dialog_modal_box">
+            <h2>New Phase</h2>
+            <div id="phase_dialog_content">
+            <form id="new_phase" onsubmit="create(); return false;">
+                {% from "_form_helpers.html" import render_text_input %}
+                {{ form.hidden_tag() }}
+                {{ render_text_input('name', "Enter a name") }}
+                <input type="hidden" name="insert_id" id="insert_id">
+                <br>
+                <div class="button_input">
+                    <button onclick="cancel();" class="negative_button" type="button">
+                        Cancel
+                    </button>
+                    <button onclick="create();" type="button">Create</button>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block java_script %}
+    function allowDrop(ev) {
+        ev.preventDefault();
+    }
+
+    function confirm_delete() {
+        if (confirm('Are you sure you want to delete this experiment?')) {
+            window.location = "{{ url_for('experiment.delete', experiment_id=experiment.id) }}";
+        }
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+    }
+    function drag_new(ev) {
+        ev.dataTransfer.setData("text/plain", "new_phase");
+        // This is a hack. See comments for is_new_phase.
+        ev.dataTransfer.setData("new_phase", "");
+    }
+    function cancel() {
+        $( ".roadmap_dialog_modal" ).css('display', 'none');
+    }
+    function create() {
+        var new_phase_data = $("#new_phase").serialize();
+        $.ajax({
+          type: 'POST',
+          url: '{{ url_for("phase.new_phase", experiment_id=experiment.id) }}',
+          data: new_phase_data,
+            success: function(data) {
+               $("#phases").empty().append(data);
+               $(".roadmap_dialog_modal" ).css('display', 'none');
+            },
+            error: function(data, success, failure){
+                $("#phase_dialog_content").empty().append(data.responseText);
+            }
+
+        });
+    }
+    function drop(ev) {
+        var data = ev.dataTransfer.getData("text/plain");
+        if (data != "new_phase") {
+            return;
+        }
+        if (ev.target.id == '') {
+            dropped_on = ev.target.parentElement;
+        } else {
+            dropped_on = ev.target;
+        }
+        $('#insert_id').val(dropped_on.id);
+        ev.preventDefault();
+        if (ev.target.classList)
+          ev.target.classList.remove("insert_here");
+        else
+          ev.target.className = "phase_separator";
+        $( ".roadmap_dialog_modal input[name='name']" ).val('');
+        $( ".roadmap_dialog_modal #form_flash_errors" ).remove();
+        $( ".roadmap_dialog_modal" ).css('display', 'block');
+        $( ".roadmap_dialog_modal input[name='name']" ).focus();
+
+    }
+    function dragstart(ev) {
+    }
+    // The HTML drag and drop API does not allow you to retrieve data
+    // from the dataTransfer object on dragenter/dragleave/dragover.
+    // So we're using a hacky workaround. See
+    // https://stackoverflow.com/questions/11065803/determine-what-is-being-dragged-from-dragenter-dragover-events
+    // for discussion of this.
+    function is_new_phase_drag(ev) {
+        for (var i = 0; i < ev.dataTransfer.types.length; i++) {
+            if (ev.dataTransfer.types[i] == 'new_phase') {
+                return true;
+            }
+        }
+        return false;
+    }
+    var dropped_on = null;
+    function dragenter(ev) {
+        if (!is_new_phase_drag(ev)) {
+            return;
+        }
+        if (ev.target.classList)
+          ev.target.classList.add("insert_here");
+        else
+          ev.target.className += ' ' + "insert_here";
+    }
+    function dragleave(ev) {
+        if (!is_new_phase_drag(ev)) {
+            return;
+        }
+        if (ev.target.classList)
+          ev.target.classList.remove("insert_here");
+        else
+          ev.target.className = "phase_separator";
+    }
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Experiments{% endblock %}
+
+{% block content %}
+    {% from "_page_helpers.html" import render_content_header %}
+    {{ render_content_header(experiment.name) }}
+    <a class="clear_button_input" href="{{ url_for('experiment.new_experiment_step_3', experiment_id=experiment.id) }}"><button type="button" id="back_btn">Back</button></a>
+    <div class="center experiment_top_text">
+        Emotiv will send the following<br>
+        information to you about each<br>
+        participant.
+    </div>
+    <br>
+    <div class="center_element center">
+        <form method=post action='' class="center">
+            {{ form.hidden_tag() }}
+            <div id="criteria_form"></div>
+        </form>
+        <br><br><br>
+    </div>
+{% endblock %}
+
+{% block after_content %}
+  <script>
+    requirejs([_es6('criteria_form')], function(criteriaForm) {
+      criteriaForm.render({
+        newExperiment: true,
+        attributes: {{ attributes|tojson|safe }},
+        initialDisplayed: {{ selected|tojson|safe }},
+        newExperiment: true,
+        forStep: 4
+      });
+    });
+  </script>
+{% endblock %}

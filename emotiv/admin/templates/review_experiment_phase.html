@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Experiments{% endblock %}
+
+{% block content %}
+    <span id="admin_tag"></span>
+    <div class="center_element center flex">
+        <div id="review_phase_header_container">
+            <h1>Experiment Phase Review</h1>
+        </div>
+        <div>
+            <div class="flex" id="review_phase_wrapper_1">
+                <div id="review_phase_wrapper_2" class="clear_button_input">
+                    <a href="{{ url_for('admin.review_experiment_roadmap', experiment_id=phase.experiment.id) }}"><button type="button"><div class="clear_button_input_text">Back</div></button></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div id="react_content"></div>
+{% endblock %}
+
+{% block after_content %}
+<script>
+    var elements = {{ elements|tojson|safe }};
+    var is_admin = true;
+</script>
+{{ import_jsx('emotiv/static/js/phase_detail.js', 'phase_detail') }}
+{% endblock %}

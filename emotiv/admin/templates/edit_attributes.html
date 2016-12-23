@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Administration{% endblock %}
+{% block content %}
+    <span id="admin_tag"></span>
+    <h1>Administration</h1>
+    <hr>
+    <div class="center_element center">
+       <h2>View or Delete Attributes</h2>
+        <div id="delete_attributes">
+            {% for attribute in attributes %}
+                <button onclick="del('{{ url_for('admin.delete_attribute', attribute_id=attribute[0]) }}', '{{ attribute[1]|single_quote_escape }}');" class="delete_btn"><i class="fa fa-trash-o"></i></button>
+                <a class="edit_attr_link" href="{{ url_for('admin.view_attribute', attribute_id=attribute[0]) }}">{{ attribute[1] }}</a>
+                <br>
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}">Back to Admin Page</a>
+    </div>
+{% endblock %}
+
+{% block java_script %}
+    function del(url, name) {
+        if (confirm('Delete attribute "' + name + '"?')) {
+            $.ajax({
+                type: 'POST',
+                url: url,
+                success: function(data) {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+{% endblock %}

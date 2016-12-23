@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% block title %}Experiments{% endblock %}
+{% block content %}
+    <div id="experiment_list_top">
+        <div>
+            <h1 id="experiment_list_header">
+                {% if user.organization_id %}{{ organization.name }}'s {% endif %}Experiments</h1>
+        </div>
+        <div id="experiment_list_body" class="center">
+            <span class="float_left"><div>
+                <form method="post" action="{{ url_for('experiment.list_all') }}">
+                {% from "_form_helpers.html" import render_submit, render_text_input %}
+                {{ render_text_input('search', 'Enter search string', style="display: inline-block; width: 250px;", value=search) }}
+                {{ render_submit('SEARCH', style="display: inline-block;") }}
+                </form>
+            </div></span>
+            <span class="forgot" id="experiment_list_sort_by">Sort By
+                <div class="drop_down">
+                    <button class="drop_btn">
+                        {{ sort_by|capitalize }}
+                        <i class="fa fa-caret-down" aria-hidden="true"></i>
+                    </button>
+                    <div class="drop_down-content">
+                        <a href="{{ url_for('experiment.list_all', sort_by='date', sort_page=1, filter_on=filter_on) }}">Date</a>
+                        <a href="{{ url_for('experiment.list_all', sort_by='name', sort_page=1, filter_on=filter_on) }}">Name</a>
+                        <a href="{{ url_for('experiment.list_all', sort_by='status', sort_page=1, filter_on=filter_on) }}">Status</a>
+                    </div>
+                </div>
+            </span>
+            {% if is_builder %}
+                <span class="forgot" id="experiment_list_status">Status
+                    <div class="drop_down">
+                        <button class="drop_btn">
+                            {{ filter_on|capitalize }}
+                            <i class="fa fa-caret-down" aria-hidden="true"></i>
+                        </button>
+                        <div class="drop_down-content">
+                            <a href="{{ url_for('experiment.list_all', filter_on='any', sort_page=1, sort_by=sort_by) }}">Any</a>
+                            <a href="{{ url_for('experiment.list_all', filter_on='editing', sort_page=1, sort_by=sort_by) }}">Editing</a>
+                            <a href="{{ url_for('experiment.list_all', filter_on='pending review', sort_page=1, sort_by=sort_by) }}">Pending Review</a>
+                            <a href="{{ url_for('experiment.list_all', filter_on='scheduled', sort_page=1, sort_by=sort_by) }}">Scheduled</a>
+                            <a href="{{ url_for('experiment.list_all', filter_on='finished', sort_page=1, sort_by=sort_by) }}">Finished</a>
+                        </div>
+                    </div>
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    <br><br>
+    <div class="center_element center">
+        {% if user.builder and user.organization_id %}
+            <div class="experiment_box" id="new_experiment_box">
+                <a class="hover_modal" href="{{ url_for('experiment.new_experiment') }}" ></a>
+                <i id="experiment_list_new_experiment_icon"
+                   class="fa fa-plus-circle fa-5x" aria-hidden="true"></i>
+                <p class="experiment_name" id="experiment_list_new_experiment_name">
+                    Create New Experiment
+                </p>
+            </div>
+        {% endif %}
+        {% if experiments.items|length > 0 %}
+            {% for experiment in experiments.items %}
+                <div class="experiment_box">
+                    <div class="hover_modal experiment_modal">
+                        {% if user.builder %}
+                            {% if experiment.status == 'e' %}
+                                {% set query = '?search=' + search|urlescape if search else '' %}
+                                {% if experiment.last_setup_step_completed == 6 %}
+                                    <a href="{{ url_for('experiment.edit_criteria', experiment_id=experiment.id) + query }}"
+                                       class="experiment_box_modal_button">EDIT PARTICIPANT CRITERIA</a>
+                                    <a href="{{ url_for('experiment.edit_roadmap', experiment_id=experiment.id) }}"
+                                       class="experiment_box_modal_button">EDIT EXPERIMENT ROAD MAP</a>
+                                {% else %}
+                                    <a href="{{ url_for('experiment.edit_roadmap', experiment_id=experiment.id) }}"
+                                       class="experiment_box_modal_button">CONTINUE EXPERIMENT SETUP</a>
+                                {% endif %}
+                            {% elif experiment.status == 'o' or experiment.status == 'f' %}
+                                <a href="{{ url_for('dashboard.for_experiment', experiment_id=experiment.id) }}"
+                                   class="experiment_box_modal_button">VIEW DASHBOARD</a>
+                            {% endif %}
+                        {% else %}
+                            <a class="experiment_box_modal_button experiment_list_view_link" href="{{ url_for('experiment.detail', experiment_id=experiment.id) }}"
+                               >View</a>
+                        {% endif %}
+                    </div>
+                    <div class="max_height_width experiment_list_bordered">
+                        <div style="
+                            height: 48%;
+                            border-top-left-radius: inherit;
+                            border-top-right-radius: inherit;
+                            {% if experiment.image_id %}
+                            background: url('{{ experiment.image.file_name }}');
+                            background-repeat: no-repeat;
+                            background-size: cover;
+                            background-position: center;
+                            {% endif %}
+                            "
+                            class="experiment_status_{{ experiment.status }}"
+                        >
+                        </div>
+                        <div class="experiment_list_text_wrapper">
+                            <p class="experiment_name">
+                                {{ experiment.name|truncate(60) }}
+                            </p>
+                            <p class="experiment_list_description">
+                                {% if experiment.description %}{{ experiment.description|truncate(120) }}{% else %}&nbsp;{% endif %}
+                            </p>
+                        </div>
+                        <div class="experiment_list_status_wrapper_1">
+                            <div class="experiment_list_status_wrapper_2">
+                                <div class="experiment_status_background experiment_status_{{ experiment.status }}">
+                                    <p class="experiment_status">
+                                        {% if experiment.status == 'e' %}
+                                            EDITING
+                                        {% elif experiment.status == 'p' %}
+                                            PENDING REVIEW
+                                        {% elif experiment.status == 's' %}
+                                            SCHEDULED
+                                        {% elif experiment.status == 'o' %}
+                                            ONGOING
+                                        {% elif experiment.status == 'f' %}
+                                            FINISHED
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="experiment_list_memo_wrapper">
+                                    <p class="experiment_status_memo">
+                                        {% if experiment.status == 'e' %}
+
+                                        {% elif experiment.status == 'p' %}
+                                        {% elif experiment.status == 's' %}
+                                            Launch Date: {{ experiment.launch_date|minus_time }}
+                                        {% elif experiment.status == 'o' %}
+                                            Scheduled End Date: {{ experiment.end_date|minus_time }}
+                                        {% elif experiment.status == 'f' %}
+                                            Confirmed End Date: {{ experiment.end_date|minus_time }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <br>
+    <br>
+    <div class="center pagination">
+            {{ experiments.total }} current experiments
+        <br><br>
+            {% if experiments.has_prev %}
+                <a class="nav_button" href="{{ url_for('experiment.list_all', sort_by=sort_by, filter_on=filter_on, sort_page=experiments.prev_num, term=search) }}">
+                    <i class="fa fa-caret-left" aria-hidden="true"></i></a>
+            {% endif %}
+            {% for page in experiments.iter_pages() %}
+                {% if not page %}
+                    <span class="nav_button">...</span>
+                {% elif search %}
+                    {% if page != sort_page %}
+                        <a class="nav_button"
+                           href="{{ url_for('experiment.list_all', sort_by=sort_by, filter_on=filter_on, sort_page=page, term=search) }}">{{ page }}</a>
+                    {% else %}
+                        <span class="nav_button nav_current_button">{{ sort_page }}</span>
+                    {% endif %}
+                {% else %}
+                    {% if page != sort_page %}
+                        <a class="nav_button"
+                           href="{{ url_for('experiment.list_all', sort_by=sort_by, filter_on=filter_on, sort_page=page) }}">{{ page }}</a>
+                    {% else %}
+                        <span class="nav_button nav_current_button">{{ sort_page }}</span>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            {% if experiments.has_next %}
+                <a class="nav_button" href="{{ url_for('experiment.list_all', sort_by=sort_by, filter_on=filter_on, sort_page=experiments.next_num, term=search) }}">
+                    <i class="fa fa-caret-right" aria-hidden="true"></i></a>
+            {% endif %}
+    </div>
+    <br><br><br>
+{% endblock %}
+
+{% block after_content %}
+    {% if user.builder %}
+        {% if pending_requests|length > 0 %}
+            <div class="dialog_modal" id="request-model">
+                <div class="dialog_modal_box">
+                    <h2>Accept new member?</h2>
+                    <div class="dialog_modal_box_content" id="request-content">
+                        Username: {{ pending_requests[0].requester.username }}<br>
+                        Access Level: {% if pending_requests[0].requester.builder %}Builder{% else %}Viewer{% endif %}
+                        <br>
+                        Requested at: {{ pending_requests[0].requester.created_at }}
+                    </div>
+                    <br>
+                    <div class="button_input">
+                        <button onclick="decline();" class="negative_button">
+                            Decline
+                        </button>
+                        <button onclick="approve();">Accept</button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block java_script %}
+    {% if user.builder %}
+        {% if pending_requests|length > 0 %}
+            var next_request_id = {{ pending_requests[0].id }};
+
+            function decline() {
+                reject_request(next_request_id);
+            }
+
+            function approve() {
+                approve_request(next_request_id);
+            }
+        {% endif %}
+        function approve_request(request_id) {
+            $.get('/organization/request/approve/ajax/' + request_id, function( data ) {
+                next_request_id = data;
+                if (data != "0") {
+                    next_request(next_request_id);
+                } else {
+                    $( ".dialog_modal" ).css('display', 'none');
+                }
+            });
+        }
+        function next_request(request_id) {
+            $.get('/organization/request/next/ajax/' + request_id, function( data ) {
+                $("#request-content").empty();
+                $("#request-content").html(data);
+            });
+        }
+        function reject_request(request_id) {
+            $.get('/organization/request/reject/ajax/' + request_id, function( data ) {
+                next_request_id = data;
+                if (data != "0") {
+                    next_request(next_request_id);
+                } else {
+                    $( ".dialog_modal" ).css('display', 'none');
+                }
+            });
+        }
+    {% endif %}
+
+    requirejs(['superfish'], function() {
+        $(document).ready(function () {
+            var user_menu = $('#user_menu').superfish({});
+        });
+    })
+{% endblock %}

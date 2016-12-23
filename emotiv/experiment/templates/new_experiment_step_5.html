@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Experiments{% endblock %}
+
+{% block head %}
+<style>
+#plus-btn {
+    display: flex;
+    justify-content: space-between;
+    width: 430px;
+    margin: 0 auto 24px auto;
+    padding: 32px 27px;
+    border-radius: 7px;
+    color: black;
+    border-color: black;
+    font-weight: normal;
+}
+.image_card {
+    width: 224px;
+    height: 170px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 7px;
+    border: thin solid black;
+    color: white;
+    text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
+    text-align: left;
+    padding: 28px 21px;
+    box-sizing: border-box;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    {% from "_page_helpers.html" import render_content_header, render_page_dots %}
+    {{ render_content_header(experiment.name) }}
+    <a class="clear_button_input" href="{{ url_for('experiment.new_experiment_step_4', experiment_id=experiment.id) }}"><button type="button" id="back_btn">Back</button></a>
+    <div class="center experiment_top_text">
+        Additional info for this Experiment.
+    </div>
+    <br>
+    <div class="center_element center">
+        {% from "_form_helpers.html" import render_checkbox_input, render_submit, render_text_area %}
+        {% if experiment.image_id %}
+        <div id="step_5_exp_image">
+                <div class="image_card" style="background-image: url({{ experiment.image.file_name }});">
+                    {{ experiment.image.name }}
+                </div>
+                <button
+                    class="clear_button_input"
+                    id="step_5_delete_image_btn"
+                    onclick="submit_form('{{ url_for('experiment.delete_image', experiment_id=experiment.id) }}')">
+                    Remove image
+                </button>
+            </div>
+        {% else %}
+            <div
+                 id="prev-imgs"
+                 class="dialog_modal"
+                 style="display: none;"
+                 onclick="$('#prev-imgs').hide()">
+                <div
+                    id="step_5_select_images_wrapper"
+                    class="dialog_modal_box"
+                    onclick="event.stopPropagation()">
+                    <div id="step_5_select_images">
+                    {% for image in available_images %}
+                        <div
+                            onclick="submit_form('{{ url_for('experiment.set_image', experiment_id=experiment.id, material_id=image.id) }}')"
+                            class="image_card"
+                            style="
+                                background-image: url({{ image.file_name }});
+                                margin-bottom: 25px;
+                                cursor: pointer;
+                            ">
+                            {{ image.name }}
+                        </div>
+                    {% endfor %}
+                    </div>
+                    <div style="height: 25px;"></div>
+                    <button class="clear_button_input" onclick="$('#prev-imgs').hide()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            <button id="plus-btn" class="clear_button_input" onclick="$('#prev-imgs').show()">
+                Choose a previously uploaded image
+                <i class="fa fa-plus-square" aria-hidden="true"></i>
+            </button>
+            <button id="plus-btn" class="clear_button_input" onclick="pick_file()">
+                Upload an image using Filestack
+                <i class="fa fa-plus-square" aria-hidden="true"></i>
+            </button>
+            <div id="step_5_supported_types">
+                Supported file types include jpg, jpeg, png, and bmp.
+            </div>
+        {% endif %}
+        <form method=post action="">
+            {{ form.hidden_tag() }}
+            <div class="center_element center">
+                {{ render_checkbox_input('private', 1, 'Make experiment private', onclick="private_check();") }}
+                <br>
+                <div id="private_box" style="display: none;">
+                    The experiment will not by seen by any participants<br>
+                    aside from those whose email you write in the box<br>
+                    below<br>
+                    <br>
+                    {{ render_text_area('participant_email', '') }}
+                    <br>
+                </div>
+                {{ render_checkbox_input('allow_repeats', 1, 'Allow repeat experiments') }}
+                <br>
+                {{ render_submit('NEXT') }}
+                <br>
+                {{ render_page_dots(6, 5) }}
+            </div>
+        </form>
+        <br><br><br>
+    </div>
+{% endblock %}
+
+{% block after_content %}
+<script src="//api.filestackapi.com/filestack.js"></script>
+{% endblock %}
+
+{% block java_script %}
+    filepicker.setKey('A9LPQU0OtQuqh04xrhojmz');
+    function submit_form(url, params) {
+        var form = $('<form/>', {
+            action: url,
+            method: 'POST'
+        });
+        form.append($('{{ form.hidden_tag() }}'));
+        if (params === undefined) {
+            params = {};
+        }
+        for (var param in params) {
+            form.append($('<input/>', {
+                type: 'hidden',
+                name: param,
+                value: params[param]
+            }));
+        }
+        form.appendTo('body');
+        form.submit();
+    }
+    function pick_file() {
+        filepicker.pickAndStore(
+            {
+                multiple: false,
+                extensions: {{ allowed_image_extensions|tojson|safe }},
+                services: ['COMPUTER', 'URL']
+            },
+            {},
+            function(Blobs) {
+                submit_form("{{ url_for('experiment.upload_image', experiment_id=experiment.id) }}", {
+                    filestack_url: Blobs[0].url
+                });
+            });
+    }
+    function private_check() {
+        if (document.getElementById('private').checked) {
+            document.getElementById('private_box').style.display = 'block';
+        }
+        else document.getElementById('private_box').style.display = 'none';
+    }
+{% endblock %}

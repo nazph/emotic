@@ -1,0 +1,7 @@
+Name: {{ name }}\r\n
+Email: {{ email }}\r\n
+Organization: {{ organization }}\r\n
+Experiment ID: {{ experiment.id }}\r\n
+Experiment Name: {{ experiment.name }}\r\n
+Requests:\r\n
+{{ suggestion }}

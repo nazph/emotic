@@ -1,0 +1,43 @@
+{% from "_form_helpers.html" import render_checkbox_input %}
+{% if options %}
+    <div class="center text_options">
+    {% for option in options %}
+        {% if view %}
+          <div class="standalone_input_box check_input center_element">
+            {% if content_types[loop.index0].data == 't' %}
+              <span>{{ option.data }}</span>
+            {% else %}
+              <img class="image_option" src="{{option.data}}" alt="">
+            {% endif %}
+          </div>
+        {% else %}
+            {% if option.content_type == 'i' %}
+                <div class="option_row row_image">
+                <input type="hidden" name="content_types-{{ loop.index|string}}" value="i"/>
+                <input type="hidden" name="criteria_options-{{ loop.index|string}}" value="{{ option.value }}"/>
+                <img
+                  class="option"
+                  src="{{ option.value }}"
+                  data-content-type="{{option.content_type}}">
+                 <span onclick="remove_option({{loop.index0|string}})">+</span>
+              </div>
+            {% else %}
+              <div class="option_row">
+                <input type="hidden" name="content_types-{{ loop.index|string }}" value="t"/>
+                <input type="hidden" name="criteria_options-{{ loop.index|string}}" value="{{ option.value }}"/>
+                <input
+                  class="option"
+                  value="{{ option.value }}"
+                  label="{{ option.value }}"
+                  data-content-type="{{option.content_type}}"
+                  readonly
+                  checked="checked"/>
+                 <span onclick="remove_option({{loop.index0|string}})">+</span>
+              </div>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    </div>
+{% else %}
+    No options added yet.
+{% endif %}

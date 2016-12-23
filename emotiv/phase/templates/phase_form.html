@@ -1,0 +1,16 @@
+{% from "_form_helpers.html" import flash_errors, render_text_input %}
+<div id="form_flash_errors">
+{{ flash_errors(form) }}
+</div>
+<form id="new_phase" onsubmit="create(); return false;">
+    {{ form.hidden_tag() }}
+    {{ render_text_input('name', "Enter a name") }}
+    <input type="hidden" name="insert_id" id="insert_id" value="{{ insert_id }}">
+    <br>
+    <div class="button_input">
+        <button onclick="cancel();" class="phase_form_cancel_button" type="button">
+            Cancel
+        </button>
+        <button onclick="create();" type="button">Create</button>
+    </div>
+</form>

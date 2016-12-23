@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Experiments{% endblock %}
+
+{% block flashes %}
+    {% from "_form_helpers.html" import flash_errors %}
+    {{ flash_errors(form) }}
+{% endblock flashes %}
+
+{% block content %}
+    {% from "_page_helpers.html" import render_content_header, render_page_dots %}
+    {{ render_content_header('New Experiment') }}
+    <div class="center experiment_top_text">
+        In order to create an experiment we<br>
+        will need to get some information<br>
+        from you.
+    </div>
+    <div class="center_element center">
+        {% from "_form_helpers.html" import render_submit, render_text_area, render_text_input %}
+        <form method=post action=''>
+            <dl>
+                {{ form.hidden_tag() }}
+                {{ render_text_input(form.name.short_name, 'Name of Experiment', value=form.name.data) }}
+                <br>
+                {{ render_text_area(form.description.short_name, 'Short Description of Experiment', value=form.description.data) }}
+                <br>
+                {{ render_submit('NEXT') }}
+                <br>
+                {{ render_page_dots(6, 1) }}
+            </dl>
+        </form>
+    </div>
+{% endblock %}

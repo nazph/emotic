@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}New Organization{% endblock %}
+{% block flashes %}
+    {% from "_form_helpers.html" import flash_errors %}
+    {{ flash_errors(form) }}
+{% endblock flashes %}
+{% block content %}
+    New Organization
+    <hr>
+    <div class="center_element center">
+        <form method="post" action=""/>
+        {{ form.hidden_tag() }}
+        <div class="standalone_input_box text_input center_element">
+            <input class="standalone_input_box" type="text" name="name" placeholder="Organization Name"/>
+        </div>
+        <div class="submit_input center_element">
+            <input type="submit" name="login" value="SUBMIT"/>
+        </div>
+        </form>
+    </div>
+{% endblock %}

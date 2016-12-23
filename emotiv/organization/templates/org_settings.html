@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}{{ organization.name }}{% endblock %}
+{% block content %}
+    {{ organization.name }}'s Settings:
+    <hr>
+    <div class="center_element center">
+        Some settings here...<br><br>
+        <div id="org_settings_content">
+            Pending Requests
+            <hr>
+            {% if pending_requests|length > 0 %}
+                Users wanting approval:
+                {% for pending in pending_requests %}
+                    Username: {{ pending.requester.username }}<br>
+                    Access Level: {% if pending.requester.builder %}Builder{% else %}Viewer{% endif %}<br>
+                    Requested At: {{ pending.requester.created_at }}<br>
+                    <a href="{{ url_for('organization.approve_request', request_id=pending.id) }}">Approve</a> |
+                    <a href="{{ url_for('organization.reject_request', request_id=pending.id) }}">Reject</a>
+                    <br><br>
+                {% endfor %}
+            {% else %}
+                None at the moment.<br><br>
+            {% endif %}
+            {% if user.id == organization.owner_id %}
+                Users Approved or Rejected
+                <hr>
+                {% if other_requests|length > 0 %}
+                    {% for other in other_requests %}
+                        {% if other.requester.id != organization.owner_id %}
+                            Username: {{ other.requester.username }}<br>
+                            Responder: {{ other.responder.username }}<br>
+                            Access Level: {% if other.requester.builder %}Builder{% else %}Viewer{% endif %}<br>
+                            Requested at: {{ other.requester.created_at }}<br>
+                            {% if other.response == "a" %}
+                                Current State: Approved |
+                                <a href="{{ url_for('organization.revoke_request', request_id=other.id) }}">Revoke</a>
+                            {% else %}
+                                Current State: Rejected |
+                                <a href="{{ url_for('organization.approve_request', request_id=other.id) }}">Approve</a>
+                            {% endif %}
+                        {% endif %}
+                        <br><br>
+                    {% endfor %}
+                {% else %}
+                    None yet.
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+
+
+{% block after_content %}
+
+    {% if user.builder %}
+        {% if pending_requests|length > 0 %}
+            <div class="dialog_modal" id="request-model">
+                <div class="dialog_modal_box">
+                    <h2>Accept new member?</h2>
+                    <div class="dialog_modal_box_content" id="request-content">
+                        Username: {{ pending_requests[0].requester.username }}<br>
+                        Access Level: {% if pending_requests[0].requester.builder %}Builder{% else %}Viewer{% endif %}
+                        <br>
+                        Requested at: {{ pending_requests[0].requester.created_at }}
+                    </div>
+                    <br>
+                    <div class="button_input">
+                        <button onclick="decline();" id="org_settings_decline_btn">
+                            Decline
+                        </button>
+                        <button onclick="approve();">Accept</button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+{% block java_script %}
+    {% if user.builder %}
+        {% if pending_requests|length > 0 %}
+            var next_request_id = {{ pending_requests[0].id }};
+
+            function decline() {
+            reject_request(next_request_id);
+            }
+
+            function approve() {
+            approve_request(next_request_id);
+            }
+        {% endif %}
+        function approve_request(request_id) {
+        $.get('/organization/request/approve/ajax/' + request_id, function( data ) {
+        next_request_id = data;
+        if (data != "0") {
+        next_request(next_request_id);
+        } else {
+        $( ".dialog_modal" ).css('display', 'none');
+        }
+        });
+        }
+        function next_request(request_id) {
+        $.get('/organization/request/next/ajax/' + request_id, function( data ) {
+        $("#request-content").empty();
+        $("#request-content").html(data);
+        });
+        }
+        function reject_request(request_id) {
+        $.get('/organization/request/reject/ajax/' + request_id, function( data ) {
+        next_request_id = data;
+        if (data != "0") {
+        next_request(next_request_id);
+        } else {
+        $( ".dialog_modal" ).css('display', 'none');
+        }
+        });
+        }
+    {% endif %}
+{% endblock %}

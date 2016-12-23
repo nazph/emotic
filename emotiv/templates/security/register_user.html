@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Register User{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style>
+        #organization_name-ddtext0 {
+            font-size: larger;
+            font-style: italic;
+        }
+    </style>
+{% endblock %}
+
+{% block flashes %}
+    {% from "_form_helpers.html" import flash_errors %}
+    {{ flash_errors(register_user_form) }}
+{% endblock flashes %}
+
+{% block content %}
+
+<div class="login links" id="register_sign_in_or_up">
+    <a href="{{ url_for('security.login') }}">
+        <span class="inactive">Sign In</span>
+    </a>&nbsp;&nbsp;&nbsp;
+    <span class="active">Sign Up</span>
+</div>
+    <br>
+<div class="center">
+    <p>If you already have an EmotivID, please register for this app <br>using the username, email, and password for your existing EmotivID.</p>  <p>If you need help with that account, please visit <a href="https://id.emotivcloud.com/">this site</a></p>
+    <form method=post action="{{ url_for('register') }}" name="register_user_form">
+        <dl class="center">
+            {{ register_user_form.hidden_tag() }}
+            <div class="top_input_box text_input center_element">
+                <img
+                    src="{{ url_for('static', filename='images/sign-in-user-icon.png') }}"
+                    class="2x"
+                    width="16"
+                    height="16"
+                />
+                <input class="top_input_box" type="text" name="username" placeholder="Username" value="{% if register_user_form.username.data %}{{ register_user_form.username.data }}{% endif %}""/>
+            </div>
+            <div class="middle_input_box text_input center_element">
+                {% if register_user_form.password_confirm %}
+                    <input class="middle_input_box" type="password" name="password" placeholder="Password"/>
+                {% else %}
+                    <input class="bottom_input_box" type="password" name="password" placeholder="Password"/>
+                {% endif %}
+                <i class="register_lock_icon fa fa-lock" aria-hidden="true"></i>
+            </div>
+            {% if register_user_form.password_confirm %}
+                <div class="bottom_input_box text_input center_element">
+                    <i class="register_lock_icon fa fa-lock" aria-hidden="true"></i>
+                    <input class="bottom_input_box" type="password" name="password_confirm"
+                           placeholder="Password Confirm"/>
+                </div>
+            {% endif %}
+
+            <div class="top_input_box text_input center_element">
+                <input class="top_input_box" type="text" name="first_name" placeholder="First Name" value="{% if register_user_form.first_name.data %}{{ register_user_form.first_name.data }}{% endif %}"/>
+            </div>
+            <div class="middle_input_box text_input center_element">
+                <input class="middle_input_box" type="text" name="last_name" placeholder="Last Name" value="{% if register_user_form.last_name.data %}{{ register_user_form.last_name.data }}{% endif %}""/>
+            </div>
+            <div class="bottom_input_box text_input center_element">
+                <input class="bottom_input_box" type="text" name="email" placeholder="E-mail Address" value="{% if register_user_form.email.data %}{{ register_user_form.email.data }}{% endif %}""/>
+            </div>
+            <div class="forgot">Will you build experiments or just participate?</div>
+            <br>
+            <div class="top_input_box radio_input center_element">
+                <input id="viewer" onclick="javascript:yesnoCheck();" type="radio" name="builder" value="0" {% if not register_user_form.builder.data %}checked="checked"{% endif %}/>
+                <label for="viewer"><span></span>Participate only</label>
+            </div>
+            <div class="bottom_input_box radio_input center_element">
+                <input type="radio" id="builder" onclick="javascript:yesnoCheck();" name="builder" value="1" {% if register_user_form.builder.data %}checked="checked"{% endif %}/>
+                <label for="builder"><span></span>Build</label>
+            </div>
+            <br>
+            <div id="org_select" style="{% if not register_user_form.builder.data %}display:none{% endif %}">
+                <div ="forgot">Please select your organization.</div>
+                <br>
+                <div id="text_input org_container" class="center">
+                    <span id="organization_name"></span>
+                </div>
+                <div id="new_org_div" class="standalone_text_input display_none">
+                    <label for="new_org_name">Organization Name:</label>
+                    <input name="new_org_name" id="new_org_name" class="center" type="text"></input>
+                </div>
+                <br>
+                <br>
+            </div>
+            <div class="submit_input center_element">
+                <input type="submit" name="login" value="SUBMIT"/>
+            </div>
+        </dl>
+        <br>
+        <br>
+        <br>
+        {% block form_area %}
+
+        {% endblock %}
+
+    </form>
+</div>
+</div>
+{% endblock %}
+{% block java_script %}
+function yesnoCheck() {
+    if (document.getElementById('builder').checked) {
+        document.getElementById('org_select').style.display = 'block';
+    }
+    else document.getElementById('org_select').style.display = 'none';
+}
+requirejs(['jquery', 'stcombobox'], function() {
+    $(function() {
+        var combo = new STComboBox();
+        combo.Init('organization_name');
+        var data = [];
+
+        var organizations = [
+        "New Organization",
+        {% for organization in organizations %}
+            {{ organization.name|tojson }},
+        {% endfor %}
+        ];
+
+        for(var i=0; i < organizations.length; i++) {
+        data.push({id: i, text: organizations[i]});
+        }
+        combo.populateList(data);
+        var is_new_org = false;
+        combo.onSelect = function(evt, value) {
+            is_new_org = evt.target.id == 'organization_name-ddtext0';
+            $( '#new_org_div' ).toggle( is_new_org );
+        }
+        combo.$('ddi').change(function(e) {
+            console.log(e);
+        });
+        $( combo ).change(function(e) {alert('changed');});
+
+        $('form[name="register_user_form"]').submit(function() {
+            var value = $('#organization_name-ddi').val();
+            if (is_new_org) {
+                value = $('#new_org_name').val();
+            }
+            combo.getInput().val(value);
+            console.log(value);
+        });
+    });
+});
+{% endblock %}
+{% block footer %}
+    {{ super() }}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Send Confirmation{% endblock %}
+
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block flashes %}
+    {% from "_form_helpers.html" import flash_errors %}
+    {{ flash_errors(send_confirmation_form) }}
+{% endblock flashes %}
+
+{% block content %}
+    {% from "_form_helpers.html" import render_field %}
+    <form method=post action=''>
+        <dl>
+            {{ send_confirmation_form.hidden_tag() }}
+            {% for field in send_confirmation_form %}
+                {{ render_field(field) }}
+            {% endfor %}
+        </dl>
+        {% block form_area %}{% endblock %}
+
+    </form>
+{% endblock %}
+
+{% block footer %}
+    {{ super() }}
+{% endblock %}

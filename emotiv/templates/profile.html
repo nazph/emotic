@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}User Settings{% endblock %}
+
+{% block content %}
+User Settings 
+<hr>
+<div class="forgot center">
+    {% from "_form_helpers.html" import render_set_attribute %}
+    Here you can do various things such as <br>
+    change your password and set your attributes
+</div>
+<br>
+<div class="login links center">
+    <span class="active">Attributes</span>
+    &nbsp;&nbsp;&nbsp;
+    <a target="_blank" href="{{ password_link }}">
+        <span class="inactive">Password</span>
+    </a>
+</div>
+<br>
+<div class="center_element center">
+    <h2>Change Attributes</h2>
+    {{render_set_attribute(attributes)}}
+</div>
+{% endblock %}

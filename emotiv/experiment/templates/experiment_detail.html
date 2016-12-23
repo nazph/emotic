@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+
+{% block title %}Experiments{% endblock %}
+
+{% block content %}
+
+{% if need_criteria %}
+{% from "_form_helpers.html" import render_set_attribute %}
+<div class="center_element center">
+    <h2>You need to fill these in before moving forward</h2>
+
+    {{render_set_attribute(need_criteria, request.path)}}
+</div>
+{% else %}
+
+<div class="container-center">
+    <div class="item headset-adjustment-container">
+        <input type="hidden" id="txtInputTime"/>
+        <h2>Please adjust your Emotiv<br>headset before beginning</h2>
+        <div id="headset">
+            <div id="headset-img">
+                <img src="{{ url_for('static', filename='images/headset/headset.png') }}"/>
+            </div>
+            <div id="f3">
+                <img src="{{ url_for('static', filename='images/headset/f3-black.png') }}" name="smallNote"/>
+            </div>
+            <div id="f4">
+                <img src="{{ url_for('static', filename='images/headset/f4-black.png') }}" name="smallNote"/>
+            </div>
+            <div id="t7">
+                <img src="{{ url_for('static', filename='images/headset/t7-black.png') }}" name="smallNote"/>
+            </div>
+            <div id="t8">
+                <img src="{{ url_for('static', filename='images/headset/t8-black.png') }}" name="smallNote"/>
+            </div>
+            <div id="pz">
+                <img src="{{ url_for('static', filename='images/headset/pz-black.png') }}" name="smallNote"/>
+            </div>
+            <div id="cfr">
+                <img src="{{ url_for('static', filename='images/headset/cfr-black.png') }}" name="smallNote"/>
+            </div>
+        </div>
+        <br>
+    </div>
+    <div id='baseline' class='item'>
+        <div id='adjustment-text'>
+            <p>Place the Insight on your head so that the reference sensor arm makes firm contact with the skin behind your left ear.</p>
+            <p>Tilt headset until front sensors are three fingers above your brows.</p>
+            <p>Work each sensor underneath hair to make contact with your scalp.</p>
+            <p>If necessary, rehydrate sensors with rehydration solution or bend the reference arm to achieve better contact.</p>
+            <div class="button_input">
+                <button id="confirmAdjustment">Proceed</button>
+            </div>
+        </div>
+        <div id="baseline-button" style="display: none;">
+            <h2 class="center_element center baselineHeader">Gaze Tracker Calibration</h2>
+            <div class="bpopup baseline_start">
+                <div class="center_element center">
+                    <p class="baselineText">Please click the red dots as they appear on the screen.</p>
+                    <div class="button_input">
+                        <button id="startBaseline" style="display: none;">Start Baseline</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="baseline1" class="bpopup hidden">
+
+            <div class='header'>
+
+            </div>
+
+            <div class='content'>
+
+                <div class='description-content'>
+
+                    <div class="col-lg-9 col-md-9 col-xs-9 col-sm-9 description-content-text">
+                        <h4>Baseline Step 1:</h4>
+                        <p>Relax with your eyes open.</p><br/>
+                        <p>Progress:</p>
+                    </div>
+                    <div class="">
+                        <div id="baseline1_bar">
+                            <div id="baseline1_progress"></div>
+                        </div>
+                    </div>
+                    <br>
+                    <div class='controls'>
+                        <div class="flex">
+                        <div class="button_input item">
+                            <button id="cancelEyesOpen" class="highlightbutton">Cancel</button>
+                        </div>
+                        <div class="button_input item">
+                            <button id="startEyesOpen" class="highlightbutton">Proceed</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="baseline2" class="bpopup hidden">
+
+            <div class='header'>
+
+            </div>
+
+            <div class='content'>
+
+                <div class='description-content'>
+
+                    <div class="col-lg-9 col-md-9 col-xs-9 col-sm-9 description-content-text">
+                        <h4>Baseline Step 2:</h4>
+                        <p>Relax with your eyes closed.</p><br/>
+                        <p>Progress:</p>
+                    </div>
+                    <div class="">
+                        <div id="baseline2_bar">
+                            <div id="baseline2_progress"></div>
+                        </div>
+                    </div>
+                    <br>
+                    <div class='controls'>
+                        <div class="flex">
+                            <div class="item">
+                                <div class="item button_input">
+                                    <button id="cancelEyesClose" class="highlightbutton">Cancel</button>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <div class="button_input">
+                                    <button id="startEyesClose" class="highlightbutton">Proceed</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <canvas id="gazeCanvas" width="640"  height="480"></canvas>
+    <canvas id="canvas" width="640" height="480" hidden="true"></canvas>
+</div>
+
+
+{% endif %}
+<hr>
+<!-- Not sure if I need to do this part? -->
+{% endblock %}
+
+{% block after_content %}
+    <script>
+      var experimentViewProps = {{ experiment_view_props|tojson|safe }};
+      var isFinished = false;
+      var experimentWroteHeader = false;
+      var experimentEEGDataFile;
+      var experimentMotionDataFile;
+      var experimentfileName = generateUUID(); 
+      var experimentCountOfFile = 0;
+      var experimentSampleNumber_EEG = 0;
+      var experimentCountOfFile = 0;
+      var experimentSampleNumber_Motion = 0;
+      var experimentSampleNumber_ES;
+      var experimentInterval;
+      var experimentCountOfFile;
+      var durations = [];
+      var isFinished = false;
+
+      function writeDatatoCSV(eegDataFile, motionDataFile, affectivDataFile, timeStamp, isWriteHeader)
+      {
+
+          ELSPlugin().ELS_CreateDirectoryProfile("Emotiv", "Emotiv-EEG");
+          EdkDll.IEE_DataUpdateHandle(0);
+          var stringData = ELSPlugin().ELS_IEE_DataGetToFile(eegDataFile, timeStamp, isWriteHeader);
+          var arrayEEGData = stringData.split(',');
+
+          experimentSampleNumber_EEG = experimentSampleNumber_EEG + parseInt(arrayEEGData[1]);
+
+          EdkDll.IEE_MotionDataUpdateHandle(0);
+          var stringData = ELSPlugin().ELS_IEE_MotionDataGetToFile(motionDataFile, timeStamp, isWriteHeader);
+          var arrayMotionData = stringData.split(',');
+          experimentSampleNumber_Motion = experimentSampleNumber_Motion + parseInt(arrayMotionData[1]);
+
+          if(experimentSampleNumber_EEG > (experimentSampleNumber_Motion + 60)) 
+          {
+              EdkDll.IEE_MotionDataUpdateHandle(0);
+              var stringData = ELSPlugin().ELS_IEE_MotionDataGetToFile(motionDataFile, timeStamp, isWriteHeader);
+              var arrayMotionData = stringData.split(',');
+              experimentSampleNumber_Motion = experimenSsampleNumber_Motion + parseInt(arrayMotionData[1]);
+          }
+          var stringData = ELSPlugin().ELS_IS_PerformanceMetricRawValueGetToFile(affectivDataFile, timeStamp, isWriteHeader);
+
+          experimentSampleNumber_ES++;
+          if(experimentSampleNumber_EEG > (experimentSampleNumber_ES + 0.5) * 64) 
+          {
+              var stringData = ELSPlugin().ELS_IS_PerformanceMetricRawValueGetToFile(affectivDataFile, timeStamp, true);
+              experimentSampleNumber_ES++;
+          }
+      }
+
+      function generateUUID() {
+        var d = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+          .replace(/[xy]/g, function(c) {
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d / 16);
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+          });
+        return uuid;
+      }
+
+      var stopRecording = function() {
+        for (var i = 0; i < experimentCountOfFile; i++) {
+          eegDataFile = encodeURIComponent(experimentfileName +
+              "_" + i + "_raw_eeg.csv");
+          motionDataFile = encodeURIComponent(experimentfileName +
+              "_" + i + "_motion_eeg.csv");
+          affectivDataFile = encodeURIComponent(experimentfileName +
+              "_" + i + "_affectiv_eeg.csv");
+          var eegData = encodeURIComponent(ELSPlugin()
+              .ELS_IEE_GetCSVDataBase64(eegDataFile));
+
+          var motionData = encodeURIComponent(ELSPlugin()
+              .ELS_IEE_GetCSVDataBase64(motionDataFile));
+          var esData = encodeURIComponent(ELSPlugin()
+              .ELS_IEE_GetCSVDataBase64(affectivDataFile));
+          var functionid = 21;
+          $.ajax({
+              type: "POST",
+              url: "/experiments/headset/post_data",
+              data: "functionid=" + functionid +
+                "&eegDataFile=" + eegDataFile +
+                "&motionDataFile=" + motionDataFile +
+                "&affectivDataFile=" + affectivDataFile +
+                "&eegData=" + eegData +
+                "&motionData=" + motionData +
+                "&esData=" + esData +
+                "&sampleEEG=" + experimentSampleNumber_EEG +
+                "&sampleES=" + experimentSampleNumber_ES +
+                "&countOfFile=" + experimentCountOfFile +
+                "&experimentfileName=" + experimentfileName +
+                "&experimentId=" + {{experiment.id}} +
+                "&durations=" + JSON.stringify(durations),
+              success: function(data) {
+              }
+          });
+        }
+      }
+      var startInterval = function() {
+          experimentInterval = setInterval(function() {
+              if (isFinished) {
+                clearInterval(experimentInterval);
+                stopRecording();          
+              }
+              var today = new Date();
+              var milliseconds = today.getMilliseconds();
+              var timeStamp = Date.parse(today) / 1000 + milliseconds / 1000;
+              var timeStampString = timeStamp.toString();
+              if ((experimentSampleNumber_EEG >= 23040 * experimentCountOfFile) &&
+                  (experimentSampleNumber_EEG < 23040 * (experimentCountOfFile + 1))) {
+                eegDataFile = experimentfileName + "_" + experimentCountOfFile + "_raw_eeg.csv";
+                motionDataFile = experimentfileName + "_" + experimentCountOfFile + "_motion_eeg.csv";
+                affectivDataFile = experimentfileName + "_" + experimentCountOfFile + "_affectiv_eeg.csv";
+                experimentCountOfFile++;
+              }
+              writeDatatoCSV(eegDataFile, motionDataFile,
+                  affectivDataFile, timeStampString, experimentWroteHeader);
+              if (!experimentWroteHeader) experimentWroteHeader = true;
+          }, 120);
+
+    }
+    
+    var gazeCanvas = document.getElementById('gazeCanvas');
+    gazeCanvas.width = document.documentElement.clientWidth;
+    gazeCanvas.height = document.documentElement.clientHeight;
+    var canvas = document.getElementById('canvas');
+
+    var gazeCanCon = gazeCanvas.getContext('2d');
+    var canCon = canvas.getContext('2d');
+    var video = document.createElement('video');
+    var mWidth = 0;
+    var mHeight = 0;
+
+    var m_Tracker;
+    var faceData;
+    var imageData;
+
+    var ppixels,
+    	pixels;
+
+    var startTracking = false;
+    var startedCalibration = true;
+    var startCalibrating = true;
+    var experimentStarted = false;
+    var trackerReturnState;
+    var calibIndex = 0;
+    var experimentGazeData = [];
+
+    var calibrations = [
+        1, 0.1, 0.1,
+        2, 0.1, 0.5,
+        3, 0.1, 0.9,
+        4, 0.3, 0.1,
+        5, 0.3, 0.5,
+        6, 0.3, 0.9,
+        7, 0.5, 0.1,
+        8, 0.5, 0.5,
+        9, 0.5, 0.9,
+        10, 0.7, 0.1,
+        11, 0.7, 0.5,
+        12, 0.7, 0.9,
+        13, 0.9, 0.1,
+        14, 0.9, 0.5,
+        15, 0.9, 0.9,
+    ];
+
+    var calibCount = calibrations.length/3;
+
+	var Module = 
+	{
+		onRuntimeInitialized: function()
+		{
+			onModuleInitialized();
+		}
+	};
+
+	function onModuleInitialized() {
+        if (mWidth === 0)
+        {
+            setTimeout(onModuleInitialized, 500);
+            return
+        }
+        
+        Module.initializeLicenseManager('{{ url_for('static', filename=visage_license_file) }}');
+        m_Tracker = new Module.VisageGazeTracker('{{ url_for('static', filename='visageFacialFeaturesHigh.cfg') }}');
+        faceData = new Module.FaceData();
+        ppixels = Module._malloc(mWidth*mHeight*4);
+        pixels = new Uint8Array(Module.HEAPU8.buffer, ppixels, mWidth*mHeight*4);
+        processFrame();
+	}
+
+    var fps = 30;
+    var now;
+    var then = Date.now();
+    var interval = 1000/fps;
+    var delta;
+
+    function processFrame() {
+        window.requestAnimationFrame(processFrame);
+        
+        now = Date.now();
+        delta = now - then;
+        
+        //Limit frame rate according to the fps variable
+        if (delta > interval) {
+            then = now - (delta % interval);
+            gazeCanCon.clearRect(0, 0, gazeCanvas.width, gazeCanvas.height);
+
+            canCon.drawImage(video,0,0,mWidth,mHeight);
+            
+            //Access pixel data	
+            imageData = canCon.getImageData(0,0, mWidth, mHeight).data;
+            
+            //Save pixel data to preallocated buffer
+            for(i=0; i<imageData.length; i+=4)
+            {
+                pixels[i] = imageData[i];
+            }
+
+            if (startTracking)
+            {
+                trackerReturnState = m_Tracker.track(
+                    mWidth, mHeight,ppixels, faceData,
+                    Module.VisageTrackerImageFormat.VISAGE_FRAMEGRABBER_FMT_RGBA.value,
+                    Module.VisageTrackerOrigin.VISAGE_FRAMEGRABBER_ORIGIN_TL.value, 
+                    0,
+                    -1
+                );
+                
+                if (trackerReturnState===Module.VisageTrackerStatus.TRACK_STAT_OK.value && experimentStarted) {
+                    experimentGazeData.push({'gazeDataX': faceData.gazeData.x, 'gazeDataY': faceData.gazeData.y, 'timestamp': new Date().toISOString()}); 
+                }
+
+                drawScreenSpaceGaze(calibrations[3 * calibIndex + 1], calibrations[3 * calibIndex + 2]);
+
+                if (startedCalibration) {
+                    m_Tracker.initOnlineGazeCalibration();
+                    startedCalibration = false;
+                }
+            }
+        }
+
+    }
+
+    function drawScreenSpaceGaze(x, y) {
+        gazeCanCon.beginPath();
+        gazeCanCon.fillStyle = "#EC0000";
+        gazeCanCon.arc(x * gazeCanvas.width, y * gazeCanvas.height, 10, 0, 2*Math.PI, true);
+        gazeCanCon.closePath();
+        gazeCanCon.fill();
+    }
+
+    function startStream(stream){
+        video.addEventListener('canplay', function DoStuff() {
+            video.removeEventListener('canplay', DoStuff, true);
+            setTimeout(function() {
+                video.play();
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                mWidth = video.videoWidth;
+                mHeight = video.videoHeight;
+            }, 1000);
+        }, true);
+            
+        var domURL = window.URL || window.webkitURL;
+        video.src = domURL ? domURL.createObjectURL(stream) : stream;
+            
+        video.play();
+    }
+
+    function deniedStream(){
+        alert("Camera access denied!)");
+    }
+
+    function errorStream(e){
+        if (e){
+            console.error(e);
+        }
+    }
+
+    function startCamera()
+    {
+        window.URL = window.URL || window.webkitURL;
+        navigator.getUserMedia_ =  navigator.getUserMedia || navigator.webkitGetUserMedia ||
+                                navigator.mozGetUserMedia || navigator.msGetUserMedia;
+        
+        
+        //Here is where the stream is fetched
+        try {
+            navigator.getUserMedia_({
+                video: true,
+                audio: false
+            }, startStream, deniedStream);
+            } catch (e) {
+                try {
+                    navigator.getUserMedia_('video', startStream, deniedStream);
+                } catch (e) {
+                    errorStream(e);
+                }
+            }
+        video.loop = video.muted = true;
+        video.autoplay = true;
+        video.load();
+        startTracking = true;
+        experimentGazeData = [];
+        $('#gazeCanvas').css('z-index', 999);
+    }
+
+    /**
+    * Mouse position handler
+    */
+    function getPosition(event)
+    {
+        var xcan = new Number();
+        var ycan = new Number();
+        var xcanrel = new Number();
+        var ycanrel = new Number();
+        if (event.x != undefined && event.y != undefined)
+            {
+              xcan = event.x;
+              ycan = event.y;
+            }
+            else // Firefox method to get the position
+            {
+              xcan = event.clientX + document.body.scrollLeft +
+                  document.documentElement.scrollLeft;
+              ycan = event.clientY + document.body.scrollTop +
+                  document.documentElement.scrollTop;
+            }
+        xcan -= gazeCanvas.offsetLeft;
+        ycan -= gazeCanvas.offsetTop;
+        xcanrel = xcan / gazeCanvas.width;
+        ycanrel = ycan / gazeCanvas.height;
+        calibrate(xcanrel,ycanrel);
+    }
+
+    gazeCanvas.addEventListener("mousedown", getPosition, false);
+    
+    var clickdif = 0.02;
+
+    function calibrate(xrel,yrel)
+    {
+        if(!startCalibrating)
+        {
+            return;
+        }
+
+        if( xrel<(calibrations[3 * calibIndex + 1]+clickdif) && 
+            xrel>(calibrations[3 * calibIndex + 1]-clickdif) && 
+            yrel<(calibrations[3 * calibIndex + 2]+clickdif) && 
+            yrel>(calibrations[3 * calibIndex + 2]-clickdif)
+        )
+        {
+            if (startTracking===true)
+            {
+                m_Tracker.addGazeCalibrationPoint(calibrations[3 * calibIndex + 1], calibrations[3 * calibIndex + 2]);
+                calibIndex++;
+                
+                if(calibIndex >= calibCount)
+                {
+                    m_Tracker.finalizeOnlineGazeCalibration();
+                    startCalibrating = false;
+                    $('#gazeCanvas').css('z-index', -999);
+                    $('.baselineHeader').text('Baseline');
+                    $('.baselineText').text("Before doing the experiment, let’s see what your resting brain is like today.");
+                    $('#startBaseline').show();
+                }
+            }	
+        }
+    }
+
+    </script>
+    <div id="experiment-view" style="display: none;">
+        {{ import_jsx('emotiv/experiment/jsx/experiment_view.js', 'experiment_view') }}
+    </div>
+    <script src="{{ url_for('static', filename='js/visageSDK.js') }}"></script>
+{% endblock %}
+
+{% block java_script %}
+{% endblock %}

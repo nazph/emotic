@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <object id="plugin0" type="application/x-emotivlifesciencesbtle" width="0" height="0">
+        <param name="onload" value="pluginLoaded" />
+    </object>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %} - Emotiv Builder and Viewer</title>
+    <meta name="description" content="{{ description }}">
+    <meta name="keywords" content="{{ keywords }}">
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="{{ og_title }}"/>
+    <meta property="og:description" content="{{ og_description }}"/>
+    <meta property="og:image" content="{% if og_image %}{{ og_image }}{% else %}{{ url }}{% endif %}"/>
+    <meta property="og:url" content="{{ url }}"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/react-select/dist/react-select.css">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/avenir.css') }}"/>
+    <link href="{{ url_for('static', filename='css/application.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/jquery-ui.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/superfish.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/stcombobox.css') }}" rel="stylesheet" media="screen">
+    <script src="{{ url_for('static', filename='js/jquery-2.2.0.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tooltip_pop_over_def.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/plugin/EdkDll.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/plugin/EmoEngine.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/plugin/EmoState.js') }}"></script>
+    <script src="{{ url_for('static', filename='bower_components/heatmap.js-amd/build/heatmap.min.js') }}"></script>
+    <!-- React defined on window -->
+    <script src="https://npmcdn.com/react@15.3.0/dist/react-with-addons.min.js"></script>
+    <script src="https://npmcdn.com/react-dom@15.3.0/dist/react-dom.min.js"></script>
+
+    {% block head %}
+    {% endblock %}
+    <script>
+        {% set min = '.min' if production else '' %}
+        var require = {
+            baseUrl: '/static/js',
+            paths: {
+                bluebird: 'https://npmcdn.com/bluebird@3.4.2/js/browser/bluebird.core.min',
+                Chartjs: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart{{min}}',
+                css: 'css.min',
+                'es6-polyfill': 'https://npmcdn.com/babel-polyfill@6.13.0/dist/polyfill.min',
+                filepicker: '//api.filestackapi.com/filestack',
+                fontawesome: 'https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min',
+                googleMaps: 'https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places&key=AIzaSyANNkKtoILYLQ-V8ZL35U0tzcYwGXvUj6M',
+                // jquery: 'jquery-2.2.0.min',
+                loglevel: 'https://cdnjs.cloudflare.com/ajax/libs/loglevel/1.4.0/loglevel.min',
+                moment: 'https://npmcdn.com/moment@2.14.1/min/moment.min',
+                papaparse: 'https://npmcdn.com/papaparse@4.1.2/papaparse.min',
+                radium: 'https://npmcdn.com/radium@0.18.1/dist/radium.min',
+                react: 'https://npmcdn.com/react@15.3.0/dist/react-with-addons{{min}}',
+                reactDOM: 'https://npmcdn.com/react-dom@15.3.0/dist/react-dom{{min}}',
+                lodash: 'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.2/lodash{{min}}',
+                'react-dnd': 'https://npmcdn.com/react-dnd@2.1.4/dist/ReactDnD.min',
+                'react-dnd-html5-backend': 'https://npmcdn.com/react-dnd-html5-backend@2.1.2/dist/ReactDnDHTML5Backend.min',
+                'react-autosize': 'bower_components/react-input-autosize/dist/react-input-autosize',
+                'whatwg-fetch': 'https://npmcdn.com/whatwg-fetch@1.0.0/fetch'
+            },
+            {% if not production %}
+            babel: {
+                presets: ['es2015', 'react'],
+                plugins: ['transform-object-rest-spread', 'transform-decorators-legacy']
+            },
+            {% endif %}
+            shim: {
+                // Force dependency orderings. http://stackoverflow.com/a/31869623/3072514
+                Chartjs: ['moment-fix'],
+                filepicker: {
+                  exports: 'filepicker'
+                },
+                reactDOM: ['react'],
+                'typeahead.bundle.min': ['jquery'],
+                'typeahead-addresspicker.min': {
+                    deps: ['typeahead.bundle.min'],
+                    exports: 'AddressPicker'
+                }
+            },
+        };
+        function _es6(module) {
+            {% if production %}
+            return module + '.bundle';
+            {% else %}
+            return 'es6!' + module;
+            {% endif %}
+        }
+          var engine = EmoEngine.instance();
+          var username;
+          var passwordsave;
+          var isDoneBaseline = false;
+          var usernameCloud; // used in baseline
+          var usernameLogin;
+          var userID;
+          var sdkProfileList;
+          var sampleNumber_EEG = 0;
+          var sampleNumber_Motion = 0;
+          var countSampleEEG0 = 0;
+          var countisEEG = 0;
+          var countisOpenFileW = 0;
+          var sampleNumber_ES = 0;
+          // check is connecting to composer, headset.
+          var isEngineConnect;
+          // check is update emoengine to stop timeout update emoengine
+          var isStopUpdateEmoEngine = false;
+          var isLostConnection = false;
+          var isAlertLostConnection = false;
+          var timeConnection = new Date();
+          // check is have 3 sensors at headset, updated at headset js file
+          var isThreeSensorsStatus = false;
+          // check login with Guest
+          var isGuestLogin = false;
+          // check login with EmotivID
+          var isEmotivIDLogin = false;
+          // if Guest login or not login hidden report
+          var isHiddenReport = false;
+          var sysTime;
+          var wirelessSignal;
+          var batteryPower;
+          // var currentAction, detectionStatus, difficultyLevel;
+          var isMental;
+          var isFacial;
+          var isPerformance;
+          var isDrawPerformance;
+          var numProfile = 0;
+          var numProfileCloud = 0;
+          var isStartBaseline = false;
+          // var is
+          var userIdProfile = 0;
+          var imageCogBox = new Image();
+          var imageFacial = new Image();
+    </script>
+    <!-- Items dependent on react -->
+    <script src="https://unpkg.com/classnames/index.js"></script>
+    <script src="https://unpkg.com/react-input-autosize/dist/react-input-autosize.js"></script>
+    <script src="https://unpkg.com/react-select/dist/react-select.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/react-select/dist/react-select.css">
+    <script data-main="{{ url_for('static', filename='js/main.js') }}" src="{{ url_for('static', filename='js/require.js') }}"></script>
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function () {
+                        (i[r].q = i[r].q || []).push(arguments)
+                    }, i[r].l = 1 * new Date();
+            a = s.createElement(o),
+                    m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+        ga('create', '{{ google_analytics }}', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+    <script type="text/javascript">
+        {% block top_java_script %}
+        {% endblock %}
+    </script>
+
+</head>
+<body>
+<header>
+    <div id="base_logo">
+        <div class="logo">
+            <a href="/">
+                <img src="{{ url_for('static', filename='images/Emotiv-logo.png') }}" class="2x" width="109" height="13" alt="emotiv"/>
+            </a>
+        </div>
+    </div>
+    <div class="center" id="base_sensor_bar">
+        <div id="base_sensor_bar_content">
+            <img src="/static/images/sensor-bar-green.png" width="10" height="20" class="2x"/>
+            <img src="/static/images/sensor-bar-green.png" width="10" height="20" class="2x"/>
+            <img src="/static/images/sensor-bar-yello.png" width="10" height="20" class="2x"/>
+            <img src="/static/images/sensor-bar-red.png" width="10" height="20" class="2x"/>
+            <img src="/static/images/sensor-bar-green.png" width="10" height="20" class="2x"/>
+        </div>
+    </div>
+    <div id="base_user_menu">
+        <div id="base_user_menu_content">
+            {% if user.is_authenticated() %}
+                <ul class="sf-menu user_menu">
+                    <li class="current" id="base_user_menu_username">
+                        <a href="#">
+                            {{ user.username }}
+                            <i id="base_user_menu_icon" class="fa fa-caret-down" aria-hidden="true"></i>
+                        </a>
+                        <ul>
+                            {% if user.builder and not user.has_role('admin') %}
+                                {% if user.organization_id %}
+                                    <li class="">
+                                        <a href="{{ url_for('organization.settings') }}">Organization Settings</a>
+                                    </li>
+                                {% else %}
+                                    <li>
+                                        <a href="{{ url_for('organization.new') }}">Create New Organization</a>
+                                    </li>
+                                {% endif %}
+                            {% endif %}
+                            {% if user.has_role('admin') %}
+                                <li>
+                                    <a href="{{ url_for('admin.dashboard') }}">Administration</a>
+                                </li>
+                            {% endif %}
+                            {% if not user.has_role('admin') %}
+                            <li>
+                                <a href="{{ url_for('profile') }}">User Settings</a>
+                            </li>
+                            {% endif %}
+                            <li class="">
+                                <a href="{{ url_for('security.logout') }}">Logout</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</header>
+<hr class="header"/>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+            <ul class="flashes">
+                {% for category, message in messages %}
+                <div class="center_element center alert alert-{% if category == 'error' %}danger{% elif category == 'info' %}info{% else %}success{% endif %}">
+                        <li class="{{ category }}">{{ message|safe }}</li>
+                    </div>
+                {% endfor %}
+            </ul>
+    {% endif %}
+{% endwith %}
+{% block flashes %}
+{% endblock %}
+<div class="content">
+    {% block content %}
+
+    {% endblock %}
+</div>
+{% macro import_jsx(path, build_name) %}
+    {% if production %}
+        <script src="{{ url_for('static', filename='js/'+build_name+'.bundle.js')}}"></script>
+    {% else %}
+        <script>
+            {{ compile_jsx(path) | safe }}
+        </script>
+    {% endif %}
+{% endmacro %}
+{% block after_content %}
+{% endblock %}
+<script type="text/javascript">
+  $(function() {
+      if (window.devicePixelRatio === 2) {
+          $('img.2x').attr('src', function(i, src) {
+              return src.replace(/\.[^.]+$/, '@2x$&');
+          });
+      }
+  });
+  {% block java_script %}
+  {% endblock %}
+</script>
+
+</body>
+</html>

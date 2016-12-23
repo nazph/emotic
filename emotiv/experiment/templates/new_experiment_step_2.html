@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Experiments{% endblock %}
+
+{% block content %}
+    {% from "_page_helpers.html" import render_content_header, render_page_dots %}
+    {{ render_content_header(experiment.name) }}
+    <a class="clear_button_input" href="{{ url_for('experiment.new_experiment', experiment_id=experiment.id) }}"><button type="button" id="back_btn">Back</button></a>
+    <div class="center experiment_top_text">
+        {% from "_form_helpers.html" import render_button %}
+        Select a template to start with
+    </div>
+    {{ render_button(
+        value='No thanks, start with a blank template<i class="fa fa-caret-right" style="float:right" aria-hidden="true"></i>'|safe,
+        clear=True,
+        class="center",
+        onclick="document.forms[0].submit()",
+        style="""
+            padding: 0 10px;
+            margin-bottom: 21px;
+        """,
+        button_style="""
+            cursor: pointer;
+            width: 550px;
+            margin: 0 10%;
+            padding: 28px 23px;
+            border-radius: 7px;
+            text-align: left;
+        """,
+    ) }}
+    <div class="center_element center">
+        <form method=post action='' class="center_element center">
+            {{ form.hidden_tag() }}
+            <div id='template_container'></div>
+            <div class="center_element center">
+                <br>
+                {{ render_page_dots(6, 2) }}
+            </div>
+        </form>
+        <br><br><br>
+    </div>
+{% endblock %}
+
+{% block after_content %}
+<script>
+  var templateNames = {{ form.template.choices[1:]|tojson|safe }};
+</script>
+{{ import_jsx('emotiv/experiment/jsx/new_experiment_step_2.jsx', 'step2') }}
+{% endblock %}

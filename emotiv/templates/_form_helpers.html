@@ -1,0 +1,157 @@
+{#
+   The functions in this file mirror those in components.jsx. As long as
+   both exist, they should be kept in sync.
+#}
+
+{% macro render_field(field) %}
+    <dt>{% if field.label|not_token %}{{ field.label }}{% endif %}
+    <dd>{{ field(**kwargs)|safe }}
+    </dd>
+{% endmacro %}
+
+{% macro render_select_input(name, label, items, checked_item=0, position=None, id=None, style=None)  %}
+    {% if id %}
+        <div {% if style %}style="{{ style }}"{% endif %} class="{% if position %}{% if position == 'bottom' %}bottom_input_box{% elif position == 'middle' %}middle_input_box{% elif position == 'top' %}top_input_box{% endif %}{% else %}standalone_input_box{% endif %} select_input center_element">
+            <select id="{{ id }}" name="{{ name }}">
+                {% for item in items %}
+                   <option value="{{ item[0] }}" {% if checked_item == item[0] %} selected="selected"{% endif %}>{{ item[1] }}</option>
+                {% endfor %}
+            </select>
+            <label for="{{ id }}">{{ label }}</label>
+        </div>
+    {% else %}
+        <div {% if style %}style="{{ style }}"{% endif %} class="{% if position %}{% if position == 'bottom' %}bottom_input_box{% elif position == 'middle' %}middle_input_box{% elif position == 'top' %}top_input_box{% endif %}{% else %}standalone_input_box{% endif %} select_input center_element">
+            <select id="{{ name }}" name="{{ name }}">
+                {% for item in items %}
+                   <option value="{{ item[0] }}" {% if checked_item == item[0] %} selected="selected"{% endif %}>{{ item[1] }}</option>
+                {% endfor %}
+            </select>
+            <label for="{{ name }}">{{ label }}</label>
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_checkbox_input(name, value, label, checked=False, position='standalone', id=None, onclick=None, onchange=None, class='')  %}
+    {% if id %}
+    <div class="{{position}}_input_box check_input center_element {{ class }}">
+            <input id="{{ id }}" type="checkbox" name="{{ name }}" {% if onclick %}onclick="{{ onclick }}"{% endif %}
+                   value="{{ value }}" {% if checked %} checked="checked"{% endif %} {% if onchange %}onchange="{{ onchange }}"{% endif %}/>
+            <label for="{{ id }}">{{ label }}</label>
+        </div>
+    {% else %}
+        <div class="{{position}}_input_box check_input center_element {{class }}">
+            <input id="{{ name }}" type="checkbox" name="{{ name }}" {% if onclick %}onclick="{{ onclick }}"{% endif %}
+                   value="{{ value }}" {% if checked %} checked="checked"{% endif %} {% if onchange %}onchange="{{ onchange }}"{% endif %}/>
+            <label for="{{ name }}">{{ label }}</label>
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_submit(value="SUBMIT", class=None, style=None) %}
+    <div class="submit_input center_element{% if class %} {{ class }}{% endif %}" {% if style %}style="{{ style }}"{% endif %}>
+        <input type="submit" name="submit" value="{{ value }}"/>
+    </div>
+{% endmacro %}
+
+{% macro render_button(value="SUBMIT", class=None, style=None, clear=False, onclick="", button_style=None) %}
+    <div class="{% if clear %}clear_button_input{% else %}button_input{% endif %} center_element{% if class %} {{ class }}{% endif %}" {% if style %}style="{{ style }}"{% endif %}>
+        <button type="button" {% if button_style %}style="{{ button_style }}" {% endif %}onclick="{{ onclick }}">{{ value }}</button>
+    </div>
+{% endmacro %}
+
+{% macro render_text_input(name, label, position='standalone', class=None, style=None, value=None, id=None) %}
+  {{ render_input(name, label, id=id, value=value, class=class, type='text', style=style, position=position) }}
+{% endmacro %}
+
+{% macro render_input(name, label, value=None, class=None, type='text', id=None, style=None, position='standalone') %}
+    <div {% if style %}style="{{ style }}"{% endif %} class="{{ position }}_input_box text_input center_element">
+        <input {% if id %}id="{{ id }}" {% endif %}class="{{position}}_input_box{% if class %} {{ class }}{% endif %}" type="{{ type }}" name="{{ name }}" placeholder="{{ label }}" {% if value %}value="{{ value }}"{% endif %}/>
+    </div>
+{% endmacro %}
+
+{% macro render_text_area(name, label, position=None, value=None) %}
+    <div class="{% if position %}{% if position == 'bottom' %}bottom_input_box{% elif position == 'middle' %}middle_input_box{% elif position == 'top' %}top_input_box{% endif %}{% else %}standalone_input_box{% endif %} text_input center_element" style="border: none;"><textarea
+            class="{% if position %}{% if position == 'bottom' %}bottom_input_box{% elif position == 'middle' %}middle_input_box{% elif position == 'top' %}top_input_box{% endif %}{% else %}standalone_input_box{% endif %}"
+            name="{{ name }}"
+            placeholder="{{ label }}">{% if value %}{{ value }}{% endif %}</textarea>
+    </div>
+{% endmacro %}
+
+{% macro flash_errors(form) %}
+    {% if form and form.errors %}
+        <ul class="flashes">
+        {% for field in form %}
+            {% set iter = field.entries if field.entries else [field] %}
+            {% for f in iter %}
+                {% for error in f.errors %}
+                    <div class="center_element center alert alert-danger">
+                        <li class="error">{{ f.label }}: {{ error }}</li>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_set_attribute(attributes, action='') %}
+<form id="set_attributes" method="POST" action='{% if action %}{{ action }}{% endif %}'>
+        <dl>
+            {% for attribute in attributes %}
+                {% if attribute.possible_options and attribute.input_type == 'ss' %}
+                    <div class="text_input center_element">
+                        <div class="forgot">{{attribute.name}}:</div>
+                        <select class="select_input standalone_input_box" name="{{attribute.name|lower}}">
+                            {% for possible_option in attribute.possible_options %}
+                                <option class="select_input" {% if possible_option.value in attribute.user_attribute %}selected{% endif %}> {{possible_option.value}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <br>
+                {% elif attribute.possible_options and attribute.input_type == 'ms' %}
+                    <div class="text_input center_element">
+                        <div class="forgot">{{attribute.name}}:</div>
+                            {% for possible_option in attribute.possible_options %}
+                                <div class="standalone_input_box check_input center_element">
+                                    <input id="{{possible_option.id}}" type="checkbox" name="{{attribute.name|lower}}" value="{{possible_option.value}}" 
+                                    {% if possible_option.value in attribute.user_attribute %}checked{% endif %}/>
+                                    <label for="{{possible_option.id}}">{{possible_option.value}}</label>
+                                </div>
+                            {% endfor %}
+                    </div>
+                {% else %}
+                    {% if attribute.input_type == 'dt' %}
+                        <div class="forgot">{{attribute.name}}:</div>
+                        <div class="standalone_input_box text_input center_element">
+                            <input class="standalone_input_box datepicker" {% if attribute.user_attribute %}value="{{attribute.user_attribute[0]}}"{% endif %} type="text" name="{{attribute.name|lower}}" placeholder="{{attribute.name}}"/>
+                        </div>
+                        <br>
+                    {% elif attribute.name == 'Location' %}
+                        <div class="forgot">Hometown:</div>
+                        <div class="standalone_input_box text_input center_element">
+                            <input id="address" class="standalone_input_box" type="text" {% if attribute.user_attribute %}value="{{attribute.user_attribute[0]}}"{% endif %} name="{{attribute.name|lower}}" placeholder="Enter an address"/>
+                        </div>
+                        <br>
+                    {% elif attribute.input_type == 'ot' %}
+                        <div class="forgot">{{attribute.name}}:</div>
+                        <div class="standalone_input_box text_input center_element">
+                            <input class="standalone_input_box" type="text" {% if attribute.user_attribute %}value="{{attribute.user_attribute[0]}}"{% endif %} name="{{attribute.name|lower}}" placeholder="{{attribute.name}}"/>
+                        </div>
+                        <br>
+                    {% elif attribute.input_type == 'nm' %}
+                        <div class="forgot">{{attribute.name}}:</div>
+                        <div class="standalone_input_box text_input center_element">
+                            <input class="standalone_input_box" type="number" {% if attribute.user_attribute %}value="{{attribute.user_attribute[0]}}"{% endif %} name="{{attribute.name|lower}}" placeholder="{{attribute.name}}"/>
+                        </div>
+                        <br>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            <br>
+            <br>
+            <div class="submit_input center_element">
+                <input type="submit"  value="Change Attributes"/>
+            </div>
+        </dl>
+    </form>
+{% endmacro %}

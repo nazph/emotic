@@ -1,0 +1,13 @@
+{{ message }}\r\n
+\r\n
+{% if suggestion %}
+    {{ suggestion.text }}\r\n
+{% endif %}
+{% if experiment %}
+    {{ experiment.name }}\r\n
+{% endif %}
+\r\n
+{{ comment }}\r\n
+\r\n
+Thanks,\r\n
+The Emotiv Team

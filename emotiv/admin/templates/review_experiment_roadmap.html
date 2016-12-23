@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Experiments{% endblock %}
+
+{% block content %}
+    <span id="admin_tag"></span>
+    <div class="center_element center flex">
+        <div id="review_roadmap_header">
+            <h1>Experiment Roadmap Review</h1>
+        </div>
+        <div>
+            <div id="review_roadmap_buttons" class="clear_button_input">
+                <a href="{{ url_for('admin.approve_experiment', experiment_id=experiment.id) }}"><button type="button"><div class="clear_button_input_text">Approve</div></button></a>
+                <a href="{{ url_for('admin.deny_experiment', experiment_id=experiment.id) }}"><button type="button"><div class="clear_button_input_text">Deny</div></button></a>
+                <a href="{{ url_for('admin.review_experiment', experiment_id=experiment.id) }}"><button type="button"><div class="clear_button_input_text">Return to Experiment</div></button></a>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div id="experiment_roadmap_secondary_header">
+        <div>&nbsp;</div>
+        <h2 id="experiment_roadmap_title">{{ experiment.name }} - Roadmap Review</h2>
+        <div>&nbsp;</div>
+    </div>
+    {% import '_page_helpers.html' as page %}
+    <div class="center_element center">
+        <div class="phase_container">
+            <div class="builtin_phase">
+                {{ page.render_phase_hover(experiment.calibration_phase, True, True) }}
+                Calibration
+            </div>
+            <div id="experiment_roadmap_calibration_introduction" class="phase_separator">
+                <div class="phase_arrow">
+                    <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+                </div>
+            </div>
+            <div class="builtin_phase">
+                {{ page.render_phase_hover(experiment.start_phase, True, True) }}
+                Introduction
+            </div>
+            <div id="phases">
+                    <div id="{{ experiment.start_phase.id }}_{{ experiment.start_phase.default_condition.next_phase.id }}" class="phase_separator" ondragenter="dragenter(event);" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragleave(event);">
+                        <div class="phase_arrow">
+                            <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    {{ page.render_recursive_phase(experiment, experiment.start_phase.default_condition.next_phase, True) }}
+            </div>
+            <div class="builtin_phase phase_conclusion">
+                {{ page.render_phase_hover(experiment.end_phase, True, True) }}
+                Conclusion
+            </div>
+        </div>
+        <hr/>
+    </div>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+{% endblock %}
+

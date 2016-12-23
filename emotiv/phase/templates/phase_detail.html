@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Experiments{% endblock %}
+
+{% from "_form_helpers.html" import render_submit, render_text_input, flash_errors %}
+{% block content %}
+    <div
+        class="center_element center"
+        id="phase_detail_delete_phase"
+    >
+        <h1>{{ phase.name }}</h1>
+        <div>
+            {% if allow_delete %}
+            <button
+                class="phase_detail_btn"
+                onclick="if (confirm('Delete this phase?')) { window.location = '{{ url_for('phase.delete', phase_id=phase.id) }}' }"
+                class="clear_button_input phase_detail_btn">
+                Delete
+            </button>
+            <!--
+            <a
+                class="links"
+            </a>
+            -->
+            {% endif %}
+            <a
+                class="links phase_detail_btn"
+                href="{{ url_for('experiment.edit_roadmap', experiment_id=phase.experiment.id) }}">
+                <button class="clear_button_input">Cancel</button>
+            </a>
+            {% if phase.experiment.calibration_phase.id != phase.id %}
+            <button class="primary_button" onclick="save_phase()">
+                Save Phase Changes
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    <hr>
+
+    {% if phase.experiment.calibration_phase.id != phase.id %}
+        <div id="react_content"></div>
+    {% else %}
+        {{ flash_errors(calibration_form) }}
+        <div class="center_element center">
+            <div id="calibration_content">
+                <form id="calibration_form" method="post" action="{{ url_for('phase.set_calibration', experiment_id=phase.experiment_id) }}">
+                    Current Minimum Calibration Length: {{ phase.experiment.calibration_length }} seconds
+                    {{ calibration_form.hidden_tag() }}
+                    {{ render_text_input('length', 'Minimum Calibration Length') }}
+                    {{ render_submit() }}
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block after_content %}
+    {% if phase.experiment.calibration_phase.id != phase.id %}
+        <script>
+            var elements = {{ elements|tojson|safe }};
+            var is_admin = false;
+            var token = {{ token|tojson|safe }};
+            var allowed_image_extensions = {{ allowed_image_extensions|tojson|safe }};
+            var allowed_audio_extensions = {{ allowed_audio_extensions|tojson|safe }};
+            var allowed_video_extensions = {{ allowed_video_extensions|tojson|safe }};
+        </script>
+        {{ import_jsx('emotiv/static/js/phase_detail.js', 'phase_detail') }}
+    {% endif %}
+{% endblock %}
